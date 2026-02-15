@@ -2,7 +2,11 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function CTASection() {
+interface CTASectionProps {
+  onGetStarted?: () => void;
+}
+
+export function CTASection({ onGetStarted }: CTASectionProps) {
   return (
     <section className="py-32 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -27,6 +31,7 @@ export function CTASection() {
             <Button
               size="lg"
               className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl text-base px-10 h-14"
+              onClick={onGetStarted}
             >
               Get Started for Free
               <ArrowRight className="ml-2 h-4 w-4" />
