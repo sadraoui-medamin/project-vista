@@ -3,17 +3,19 @@ import { ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onGetStarted?: () => void;
+}
+
+export function HeroSection({ onGetStarted }: HeroSectionProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       <div className="absolute inset-0 bg-background/60 dark:bg-background/40" />
 
-      {/* Floating orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-[10%] w-72 h-72 rounded-full gradient-bg opacity-20 blur-3xl float-animation" />
         <div className="absolute bottom-1/4 right-[10%] w-96 h-96 rounded-full gradient-bg opacity-15 blur-3xl float-animation-delayed" />
@@ -26,7 +28,6 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
-          {/* Badge */}
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
@@ -51,6 +52,7 @@ export function HeroSection() {
             <Button
               size="lg"
               className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl text-base px-8 h-12"
+              onClick={onGetStarted}
             >
               Start Free
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -70,7 +72,6 @@ export function HeroSection() {
           </p>
         </motion.div>
 
-        {/* Floating dashboard preview */}
         <motion.div
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
@@ -79,7 +80,6 @@ export function HeroSection() {
         >
           <div className="glass-strong rounded-2xl p-1 gradient-shadow">
             <div className="rounded-xl bg-card overflow-hidden">
-              {/* Mock dashboard */}
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-3 h-3 rounded-full bg-destructive/60" />

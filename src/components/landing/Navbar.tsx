@@ -6,7 +6,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = ["Features", "Integrations", "Pricing", "Docs"];
 
-export function Navbar() {
+interface NavbarProps {
+  onSignIn?: () => void;
+  onSignUp?: () => void;
+}
+
+export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -14,9 +19,9 @@ export function Navbar() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl"
+      className="fixed top-4 inset-x-0 z-50 flex justify-center px-4"
     >
-      <div className="glass rounded-2xl px-6 py-3 flex items-center justify-between">
+      <div className="glass rounded-2xl px-6 py-3 flex items-center justify-between w-full max-w-5xl">
         <div className="flex items-center gap-2">
           <div className="gradient-bg rounded-lg p-1.5">
             <Zap className="h-5 w-5 text-primary-foreground" />
@@ -39,10 +44,19 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={onSignIn}
+          >
             Sign In
           </Button>
-          <Button size="sm" className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl">
+          <Button
+            size="sm"
+            className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl"
+            onClick={onSignUp}
+          >
             Get Started
           </Button>
         </div>
@@ -61,7 +75,7 @@ export function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl mt-2 p-4 md:hidden"
+          className="glass rounded-2xl mt-2 p-4 md:hidden absolute top-full w-full max-w-5xl"
         >
           {navItems.map((item) => (
             <a
@@ -74,8 +88,12 @@ export function Navbar() {
             </a>
           ))}
           <div className="flex gap-2 mt-3">
-            <Button variant="ghost" size="sm" className="flex-1 text-muted-foreground">Sign In</Button>
-            <Button size="sm" className="flex-1 gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl">Get Started</Button>
+            <Button variant="ghost" size="sm" className="flex-1 text-muted-foreground" onClick={() => { setOpen(false); onSignIn?.(); }}>
+              Sign In
+            </Button>
+            <Button size="sm" className="flex-1 gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl" onClick={() => { setOpen(false); onSignUp?.(); }}>
+              Get Started
+            </Button>
           </div>
         </motion.div>
       )}
