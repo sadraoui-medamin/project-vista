@@ -4,6 +4,8 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { StatsSection } from "@/components/landing/StatsSection";
 import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
+import { PricingSection } from "@/components/landing/PricingSection";
+import { DocsSection } from "@/components/landing/DocsSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { AuthModal } from "@/components/AuthModal";
@@ -29,6 +31,8 @@ const Index = () => {
       <FeaturesSection />
       <StatsSection />
       <IntegrationsSection />
+      <PricingSection onGetStarted={openSignUp} />
+      <DocsSection />
       <CTASection onGetStarted={openSignUp} />
       <Footer />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab={authTab} />
