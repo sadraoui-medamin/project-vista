@@ -1,9 +1,25 @@
 import { Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const links = {
-  Product: ["Features", "Integrations", "Pricing", "Changelog"],
-  Resources: ["Documentation", "API Reference", "Community", "Blog"],
-  Company: ["About", "Careers", "Contact", "Open Source"],
+  Product: [
+    { label: "Features", href: "#features" },
+    { label: "Integrations", href: "#integrations" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Changelog", href: "#" },
+  ],
+  Resources: [
+    { label: "Documentation", href: "#docs" },
+    { label: "API Reference", href: "#" },
+    { label: "Community", href: "#" },
+    { label: "Blog", href: "#" },
+  ],
+  Company: [
+    { label: "About", href: "/about", isRoute: true },
+    { label: "Careers", href: "/careers", isRoute: true },
+    { label: "Contact", href: "/contact", isRoute: true },
+    { label: "Open Source", href: "/open-source", isRoute: true },
+  ],
 };
 
 export function Footer() {
@@ -28,10 +44,16 @@ export function Footer() {
               <h4 className="font-semibold text-sm text-foreground mb-4">{title}</h4>
               <ul className="space-y-2">
                 {items.map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {item}
-                    </a>
+                  <li key={item.label}>
+                    {item.isRoute ? (
+                      <Link to={item.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <a href={item.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        {item.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
