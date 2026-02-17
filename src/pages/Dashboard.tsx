@@ -27,6 +27,25 @@ import TimeTrackingPage from "@/pages/dashboard/TimeTrackingPage";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import TeamPage from "@/pages/dashboard/TeamPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
+import UpgradeOverlay from "@/components/dashboard/UpgradeOverlay";
+import type { Plan } from "@/contexts/AuthContext";
+
+// Define which plan is required for each page
+const pageAccess: Record<string, Plan> = {
+  dashboard: "free",
+  projects: "free",
+  team: "free",
+  time: "pro",
+  analytics: "pro",
+  settings: "free",
+};
+
+const featureLabels: Record<string, string> = {
+  time: "Time Tracking",
+  analytics: "Analytics",
+};
+
+const planRank: Record<Plan, number> = { free: 0, pro: 1, enterprise: 2 };
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", key: "dashboard" },
@@ -151,7 +170,23 @@ export default function Dashboard() {
     navigate("/");
   };
 
+  const userPlan = user?.plan || "free";
+
+  const hasAccess = (page: string) => {
+    const required = pageAccess[page] || "free";
+    return planRank[userPlan] >= planRank[required];
+  };
+
   const renderPage = () => {
+    if (!hasAccess(activePage)) {
+      return (
+        <UpgradeOverlay
+          requiredPlan={pageAccess[activePage]}
+          featureName={featureLabels[activePage] || activePage}
+          onUpgrade={() => setActivePage("settings")}
+        />
+      );
+    }
     switch (activePage) {
       case "projects": return <ProjectsPage />;
       case "time": return <TimeTrackingPage />;
