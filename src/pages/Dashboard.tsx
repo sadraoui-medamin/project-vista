@@ -15,19 +15,27 @@ import {
   ChevronRight,
   MoreHorizontal,
   ArrowUpCircle,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import ProjectsPage from "@/pages/dashboard/ProjectsPage";
 import TimeTrackingPage from "@/pages/dashboard/TimeTrackingPage";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import TeamPage from "@/pages/dashboard/TeamPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
-import UpgradeOverlay from "@/components/dashboard/UpgradeOverlay";
+// UpgradeOverlay no longer used — gating via dialog now
 import type { Plan } from "@/contexts/AuthContext";
 
 // Define which plan is required for each page
@@ -164,6 +172,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
+  const [upgradeDialog, setUpgradeDialog] = useState<string | null>(null);
 
   const handleSignOut = () => {
     signOut();
@@ -178,15 +187,6 @@ export default function Dashboard() {
   };
 
   const renderPage = () => {
-    if (!hasAccess(activePage)) {
-      return (
-        <UpgradeOverlay
-          requiredPlan={pageAccess[activePage]}
-          featureName={featureLabels[activePage] || activePage}
-          onUpgrade={() => setActivePage("settings")}
-        />
-      );
-    }
     switch (activePage) {
       case "projects": return <ProjectsPage />;
       case "time": return <TimeTrackingPage />;
@@ -210,20 +210,33 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex-1 px-2 py-4 space-y-1">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActivePage(item.key)}
-              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${
-                activePage === item.key
-                  ? "gradient-bg text-primary-foreground gradient-shadow"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </button>
-          ))}
+          {sidebarItems.map((item) => {
+            const locked = !hasAccess(item.key);
+            return (
+              <button
+                key={item.key}
+                onClick={() => locked ? setUpgradeDialog(item.key) : setActivePage(item.key)}
+                className={`relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${
+                  activePage === item.key && !locked
+                    ? "gradient-bg text-primary-foreground gradient-shadow"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+                {locked && !collapsed && (
+                  <span className="ml-auto bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center shrink-0">
+                    <Lock className="h-3 w-3 text-black" />
+                  </span>
+                )}
+                {locked && collapsed && (
+                  <span className="absolute -top-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center">
+                    <Lock className="h-2.5 w-2.5 text-black" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="p-3 border-t border-border">
@@ -274,6 +287,29 @@ export default function Dashboard() {
           {renderPage()}
         </main>
       </div>
+
+      <Dialog open={!!upgradeDialog} onOpenChange={(open) => !open && setUpgradeDialog(null)}>
+        <DialogContent className="glass border-border rounded-2xl max-w-sm">
+          <DialogHeader className="text-center items-center">
+            <div className="gradient-bg rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-2">
+              <Lock className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              {featureLabels[upgradeDialog || ""] || upgradeDialog} is locked
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Upgrade to the <span className="font-semibold gradient-text capitalize">{pageAccess[upgradeDialog || ""] || "pro"}</span> plan to unlock this feature.
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => { setUpgradeDialog(null); setActivePage("settings"); }}
+            className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl px-6 gap-2 w-full"
+          >
+            <ArrowUpCircle className="h-4 w-4" />
+            Upgrade Now
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
