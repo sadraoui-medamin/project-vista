@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+
+export type Plan = "free" | "pro" | "enterprise";
 
 interface User {
   name: string;
   email: string;
+  plan: Plan;
 }
 
 interface AuthContextType {
@@ -11,6 +13,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => void;
   signUp: (name: string, email: string, password: string) => void;
   signOut: () => void;
+  setPlan: (plan: Plan) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -22,13 +25,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const signIn = (email: string, _password: string) => {
-    const u = { name: email.split("@")[0], email };
+    const stored = localStorage.getItem("pf_user");
+    const existing = stored ? JSON.parse(stored) : null;
+    const u = { name: existing?.name || email.split("@")[0], email, plan: (existing?.plan as Plan) || "free" };
     localStorage.setItem("pf_user", JSON.stringify(u));
     setUser(u);
   };
 
   const signUp = (name: string, email: string, _password: string) => {
-    const u = { name, email };
+    const u = { name, email, plan: "free" as Plan };
     localStorage.setItem("pf_user", JSON.stringify(u));
     setUser(u);
   };
@@ -38,8 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const setPlan = (plan: Plan) => {
+    if (!user) return;
+    const u = { ...user, plan };
+    localStorage.setItem("pf_user", JSON.stringify(u));
+    setUser(u);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, signIn, signUp, signOut, setPlan }}>
       {children}
     </AuthContext.Provider>
   );

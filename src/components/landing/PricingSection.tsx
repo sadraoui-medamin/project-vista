@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Check, Zap, Building2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth, type Plan } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface PricingSectionProps {
   onGetStarted?: () => void;
@@ -75,6 +77,19 @@ const item = {
 };
 
 export function PricingSection({ onGetStarted }: PricingSectionProps) {
+  const { user, setPlan } = useAuth();
+  const navigate = useNavigate();
+
+  const handleChoosePlan = (planName: string) => {
+    const planMap: Record<string, Plan> = { Free: "free", Pro: "pro", Enterprise: "enterprise" };
+    const plan = planMap[planName] || "free";
+    if (user) {
+      setPlan(plan);
+      navigate("/dashboard");
+    } else {
+      onGetStarted?.();
+    }
+  };
   return (
     <section id="pricing" className="py-32 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -141,9 +156,9 @@ export function PricingSection({ onGetStarted }: PricingSectionProps) {
                     ? "gradient-bg gradient-shadow text-primary-foreground border-0"
                     : "glass border-0 text-foreground hover:gradient-shadow"
                 }`}
-                onClick={onGetStarted}
+                onClick={() => handleChoosePlan(plan.name)}
               >
-                {plan.cta}
+                {user?.plan === plan.name.toLowerCase() ? "Current Plan" : plan.cta}
               </Button>
 
               <ul className="space-y-3">

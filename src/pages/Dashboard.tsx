@@ -14,6 +14,7 @@ import {
   Zap,
   ChevronRight,
   MoreHorizontal,
+  ArrowUpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,6 +211,19 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {user?.plan === "free" && (
+              <Button
+                size="sm"
+                className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl h-8 text-xs gap-1.5"
+                onClick={() => setActivePage("settings")}
+              >
+                <ArrowUpCircle className="h-3.5 w-3.5" />
+                Upgrade
+              </Button>
+            )}
+            {user?.plan && user.plan !== "free" && (
+              <span className="text-xs font-semibold gradient-text uppercase">{user.plan}</span>
+            )}
             <ThemeToggle />
             <button className="relative text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />

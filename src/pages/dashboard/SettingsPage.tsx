@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import { User, Bell, Shield, Palette, Globe, Key, Save } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, Key, Save, CreditCard, Check, Zap, Building2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, type Plan } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const sections = [
@@ -15,7 +15,7 @@ const sections = [
 ];
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, setPlan } = useAuth();
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -144,6 +144,50 @@ export default function SettingsPage() {
                   <Key className="h-3.5 w-3.5 mr-1.5" /> Enable 2FA
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Subscription */}
+          <div className="glass rounded-2xl p-6">
+            <h2 className="font-semibold text-foreground mb-6 flex items-center gap-2">
+              <CreditCard className="h-4 w-4" /> Subscription
+            </h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              {([
+                { key: "free" as Plan, name: "Free", icon: Rocket, price: "$0", desc: "Basic features for small teams" },
+                { key: "pro" as Plan, name: "Pro", icon: Zap, price: "$12/mo", desc: "Advanced features & integrations" },
+                { key: "enterprise" as Plan, name: "Enterprise", icon: Building2, price: "Custom", desc: "Full control & dedicated support" },
+              ]).map((p) => {
+                const isCurrent = user?.plan === p.key;
+                return (
+                  <div
+                    key={p.key}
+                    className={`glass rounded-2xl p-4 text-center transition-shadow duration-300 ${
+                      isCurrent ? "ring-2 ring-primary/40 gradient-shadow" : "hover:gradient-shadow"
+                    }`}
+                  >
+                    <div className={`rounded-xl w-10 h-10 flex items-center justify-center mx-auto mb-3 ${isCurrent ? "gradient-bg" : "bg-muted"}`}>
+                      <p.icon className={`h-5 w-5 ${isCurrent ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                    </div>
+                    <h3 className="font-semibold text-foreground">{p.name}</h3>
+                    <p className="text-lg font-bold gradient-text">{p.price}</p>
+                    <p className="text-xs text-muted-foreground mt-1 mb-3">{p.desc}</p>
+                    {isCurrent ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                        <Check className="h-3 w-3" /> Current Plan
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl text-xs w-full"
+                        onClick={() => setPlan(p.key)}
+                      >
+                        {p.key === "free" ? "Downgrade" : "Upgrade"}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
