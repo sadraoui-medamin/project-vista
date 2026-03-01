@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -21,9 +21,26 @@ import {
   User,
   Palette,
   ArrowRightLeft,
-  MessageSquare,
-  Send,
   X,
+  ExternalLink,
+  FileText,
+  BookOpen,
+  GraduationCap,
+  MessageCircle,
+  AlertTriangle,
+  MessageSquare,
+  Keyboard,
+  Smartphone,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp,
+  Activity,
+  Calendar,
+  Target,
+  FolderPlus,
+  ListChecks,
+  UserPlus,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +64,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import ProjectsPage from "@/pages/dashboard/ProjectsPage";
 import TimeTrackingPage from "@/pages/dashboard/TimeTrackingPage";
@@ -54,7 +76,6 @@ import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import TeamPage from "@/pages/dashboard/TeamPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import type { Plan } from "@/contexts/AuthContext";
-import { TEMPLATES } from "@/types/workspace";
 
 // Define which plan is required for each page
 const pageAccess: Record<string, Plan> = {
@@ -107,116 +128,84 @@ const priorityColors: Record<string, string> = {
   Low: "bg-muted text-muted-foreground",
 };
 
-const helpSuggestions = [
-  "How do I create a workspace?",
-  "How do I manage team permissions?",
-  "What are the different project templates?",
+// ──── Notifications data ────
+const notifications = [
+  { id: 1, title: "New task assigned to you", desc: "Fix checkout flow bug", time: "2 min ago", unread: true, icon: ListChecks },
+  { id: 2, title: "Maria completed a task", desc: "Design system tokens", time: "15 min ago", unread: true, icon: CheckCircle2 },
+  { id: 3, title: "Sprint review tomorrow", desc: "Q1 Sprint Board - 10:00 AM", time: "1 hour ago", unread: false, icon: Calendar },
+  { id: 4, title: "New team member joined", desc: "Alex Kim joined your workspace", time: "3 hours ago", unread: false, icon: UserPlus },
+  { id: 5, title: "Deployment succeeded", desc: "API Integration v2.1.0", time: "5 hours ago", unread: false, icon: Sparkles },
+];
+
+// ──── Help panel links (Jira-style) ────
+const helpLinks = [
+  { icon: Sparkles, label: "Find out what's changed", external: true },
+  { icon: BookOpen, label: "Read about the new navigation", external: true },
+  { icon: FileText, label: "Browse complete documentation", external: true },
+  { icon: GraduationCap, label: "Build skills with Learning", external: true },
+  { icon: MessageCircle, label: "Ask our Community forums", external: true },
+  { icon: AlertTriangle, label: "Contact support", external: true },
+];
+
+const helpActions = [
+  { icon: MessageSquare, label: "Give feedback about ProjectFlow", highlight: true },
+  { icon: Keyboard, label: "Keyboard shortcuts", highlight: false },
+  { icon: Smartphone, label: "Get ProjectFlow Mobile", external: true },
 ];
 
 function HelpPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [messages, setMessages] = useState<{ role: "bot" | "user"; text: string }[]>([
-    { role: "bot", text: "Hi, welcome to ProjectFlow Support.\n\nYou can get help with any of our features in this AI-powered chat.\n\nHow can I assist you today?" },
-  ]);
-  const [input, setInput] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
-    setMessages((m) => [...m, { role: "user", text }]);
-    setInput("");
-    setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        { role: "bot", text: "Thanks for your question! Our team will get back to you shortly. In the meantime, check our documentation for quick answers." },
-      ]);
-    }, 800);
-  };
-
   if (!open) return null;
-
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 20, scale: 0.95 }}
-      className="fixed bottom-4 right-4 z-50 w-[380px] h-[520px] glass-strong rounded-2xl flex flex-col overflow-hidden shadow-2xl"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      className="fixed top-14 right-28 z-50 w-[320px] glass-strong rounded-xl shadow-2xl border border-border overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="gradient-bg rounded-lg p-1.5">
-            <HelpCircle className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-semibold text-foreground">Help</span>
-        </div>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <h3 className="font-semibold text-foreground">Help</h3>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <X className="h-4 w-4" />
         </button>
       </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-auto p-4 space-y-3">
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-line ${
-                msg.role === "user"
-                  ? "gradient-bg text-primary-foreground"
-                  : "bg-muted text-foreground"
-              }`}
-            >
-              {msg.text}
-            </div>
-          </div>
-        ))}
-
-        {/* Suggestion chips */}
-        {messages.length <= 1 && (
-          <div className="flex flex-col items-center gap-2 mt-4">
-            {helpSuggestions.map((s) => (
-              <button
-                key={s}
-                onClick={() => handleSend(s)}
-                className="flex items-center gap-2 text-xs px-4 py-2 rounded-xl border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-3 border-t border-border">
-        <div className="flex items-center gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
-            placeholder="Ask a question to get started"
-            className="glass border-0 rounded-xl text-sm h-9"
-          />
-          <Button
-            size="icon"
-            onClick={() => handleSend(input)}
-            className="gradient-bg text-primary-foreground border-0 rounded-xl h-9 w-9 shrink-0"
+      <div className="py-2">
+        {helpLinks.map((link) => (
+          <button
+            key={link.label}
+            className="flex items-center gap-3 w-full px-5 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
           >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-        <p className="text-[10px] text-muted-foreground text-center mt-1.5">ⓘ Uses AI. Verify results</p>
+            <link.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="flex-1 text-left">{link.label}</span>
+            {link.external && <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />}
+          </button>
+        ))}
+      </div>
+      <div className="border-t border-border py-2">
+        {helpActions.map((action) => (
+          <button
+            key={action.label}
+            className={`flex items-center gap-3 w-full px-5 py-2.5 text-sm transition-colors ${
+              action.highlight
+                ? "text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 mx-2 w-[calc(100%-16px)] rounded-lg"
+                : "text-foreground hover:bg-muted/50"
+            }`}
+          >
+            <action.icon className={`h-4 w-4 shrink-0 ${action.highlight ? "text-primary" : "text-muted-foreground"}`} />
+            <span className="flex-1 text-left">{action.label}</span>
+            {"external" in action && action.external && <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />}
+          </button>
+        ))}
+      </div>
+      <div className="border-t border-border px-5 py-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+        <a href="#" className="hover:text-primary">About ProjectFlow</a>
+        <a href="#" className="hover:text-primary">Terms of use</a>
+        <a href="#" className="hover:text-primary">Privacy policy</a>
       </div>
     </motion.div>
   );
 }
 
-function DashboardHome({ user }: { user: { name: string; email: string } | null }) {
+function DashboardHome({ user, onNavigate }: { user: { name: string; email: string } | null; onNavigate: (page: string) => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div className="mb-8">
@@ -226,17 +215,63 @@ function DashboardHome({ user }: { user: { name: string; email: string } | null 
         <p className="text-muted-foreground text-sm mt-1">Here's what's happening with your projects today.</p>
       </div>
 
+      {/* KPI Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Active Tasks", value: "24", change: "+3 today" },
-          { label: "Completed", value: "156", change: "+12 this week" },
-          { label: "In Review", value: "8", change: "2 urgent" },
-          { label: "Team Online", value: "6/9", change: "3 away" },
+          { label: "Active Tasks", value: "24", change: "+3 today", icon: ListChecks, color: "text-primary" },
+          { label: "Completed", value: "156", change: "+12 this week", icon: CheckCircle2, color: "text-green-500" },
+          { label: "In Review", value: "8", change: "2 urgent", icon: Timer, color: "text-orange-500" },
+          { label: "Team Online", value: "6/9", change: "3 away", icon: Users, color: "text-accent" },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-2xl p-4">
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-2xl font-bold gradient-text mt-1">{stat.value}</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            </div>
+            <p className="text-2xl font-bold gradient-text">{stat.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mb-8">
+        <h2 className="font-semibold text-foreground mb-3">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "New Project", icon: FolderPlus, action: () => onNavigate("projects") },
+            { label: "Create Task", icon: Plus, action: () => onNavigate("projects") },
+            { label: "Invite Member", icon: UserPlus, action: () => onNavigate("team") },
+            { label: "View Reports", icon: BarChart3, action: () => onNavigate("analytics") },
+          ].map((qa) => (
+            <button
+              key={qa.label}
+              onClick={qa.action}
+              className="glass rounded-xl p-4 flex flex-col items-center gap-2 hover:gradient-shadow transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <qa.icon className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xs font-medium text-foreground">{qa.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Activity overview row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Tasks Due Today", value: "5", icon: Target, bg: "bg-destructive/10", color: "text-destructive" },
+          { label: "Weekly Velocity", value: "32", icon: TrendingUp, bg: "bg-green-500/10", color: "text-green-500" },
+          { label: "Open PRs", value: "4", icon: Activity, bg: "bg-orange-500/10", color: "text-orange-500" },
+          { label: "Upcoming Meetings", value: "2", icon: Calendar, bg: "bg-primary/10", color: "text-primary" },
+        ].map((stat) => (
+          <div key={stat.label} className={`glass rounded-2xl p-4 border-l-4 ${stat.bg.replace("/10", "/30")}`}>
+            <div className="flex items-center gap-2 mb-1">
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              <span className="text-lg font-bold text-foreground">{stat.value}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -245,12 +280,12 @@ function DashboardHome({ user }: { user: { name: string; email: string } | null 
         <div className="lg:col-span-1 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-foreground">Projects</h2>
-            <Button size="sm" className="gradient-bg text-primary-foreground border-0 rounded-xl h-8 text-xs">
+            <Button size="sm" onClick={() => onNavigate("projects")} className="gradient-bg text-primary-foreground border-0 rounded-xl h-8 text-xs">
               <Plus className="h-3 w-3 mr-1" /> New
             </Button>
           </div>
           {projects.map((project) => (
-            <div key={project.name} className="glass rounded-2xl p-4 hover:gradient-shadow transition-shadow duration-300">
+            <div key={project.name} className="glass rounded-2xl p-4 hover:gradient-shadow transition-shadow duration-300 cursor-pointer" onClick={() => onNavigate("projects")}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-sm text-foreground">{project.name}</h3>
                 <button className="text-muted-foreground hover:text-foreground"><MoreHorizontal className="h-4 w-4" /></button>
@@ -269,7 +304,7 @@ function DashboardHome({ user }: { user: { name: string; email: string } | null 
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-foreground">Recent Tasks</h2>
-            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">View All</Button>
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate("projects")}>View All</Button>
           </div>
           <div className="glass rounded-2xl overflow-hidden">
             <div className="divide-y divide-border">
@@ -299,6 +334,8 @@ export default function Dashboard() {
   const [upgradeDialog, setUpgradeDialog] = useState<string | null>(null);
   const [projectsExpanded, setProjectsExpanded] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [readNotifs, setReadNotifs] = useState<number[]>([]);
 
   const handleSignOut = () => {
     signOut();
@@ -306,11 +343,13 @@ export default function Dashboard() {
   };
 
   const userPlan = user?.plan || "free";
-
   const hasAccess = (page: string) => {
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
   };
+
+  const markAllRead = () => setReadNotifs(notifications.map((n) => n.id));
+  const unreadCount = notifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
   const renderPage = () => {
     switch (activePage) {
@@ -319,12 +358,11 @@ export default function Dashboard() {
       case "analytics": return <AnalyticsPage />;
       case "team": return <TeamPage />;
       case "settings": return <SettingsPage />;
-      default: return <DashboardHome user={user} />;
+      default: return <DashboardHome user={user} onNavigate={setActivePage} />;
     }
   };
 
   const sidebarNav = [
-    { icon: LayoutDashboard, label: "Dashboard", key: "dashboard" },
     { icon: Clock, label: "Time Tracking", key: "time" },
     { icon: BarChart3, label: "Analytics", key: "analytics" },
     { icon: Users, label: "Team", key: "team" },
@@ -361,7 +399,7 @@ export default function Dashboard() {
             {!collapsed && <span>Dashboard</span>}
           </button>
 
-          {/* Projects - expandable */}
+          {/* Manage Projects - expandable */}
           <div>
             <button
               onClick={() => {
@@ -380,13 +418,13 @@ export default function Dashboard() {
               <KanbanSquare className="h-4 w-4 shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left">Projects</span>
+                  <span className="flex-1 text-left">Manage Projects</span>
                   <ChevronDown className={`h-3.5 w-3.5 transition-transform ${projectsExpanded ? "" : "-rotate-90"}`} />
                 </>
               )}
             </button>
 
-            {/* Sub-items: recent workspaces */}
+            {/* Sub-items */}
             {!collapsed && (
               <AnimatePresence>
                 {projectsExpanded && (
@@ -408,12 +446,21 @@ export default function Dashboard() {
                           <span className="truncate">{ws.name}</span>
                         </button>
                       ))}
+                      {/* + Create new project */}
                       <button
                         onClick={() => setActivePage("projects")}
                         className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-primary hover:bg-muted/50 transition-all font-medium"
                       >
                         <Plus className="h-3 w-3" />
-                        <span>View all</span>
+                        <span>New Project</span>
+                      </button>
+                      {/* Settings / View all workspaces */}
+                      <button
+                        onClick={() => setActivePage("projects")}
+                        className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                      >
+                        <Settings className="h-3 w-3" />
+                        <span>My Workspaces</span>
                       </button>
                     </div>
                   </motion.div>
@@ -423,7 +470,7 @@ export default function Dashboard() {
           </div>
 
           {/* Rest of nav items */}
-          {sidebarNav.slice(1).map((item) => {
+          {sidebarNav.map((item) => {
             const locked = !hasAccess(item.key);
             return (
               <button
@@ -486,10 +533,51 @@ export default function Dashboard() {
               <span className="text-xs font-semibold gradient-text uppercase">{user.plan}</span>
             )}
             <ThemeToggle />
-            <button className="relative text-muted-foreground hover:text-foreground">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full gradient-bg" />
-            </button>
+
+            {/* Notifications dropdown */}
+            <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+              <PopoverTrigger asChild>
+                <button className="relative text-muted-foreground hover:text-foreground">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full gradient-bg text-[9px] font-bold text-primary-foreground flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[360px] p-0 glass border-border rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                  <h3 className="font-semibold text-foreground text-sm">Notifications</h3>
+                  <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>
+                </div>
+                <div className="max-h-[320px] overflow-auto divide-y divide-border">
+                  {notifications.map((n) => {
+                    const isUnread = n.unread && !readNotifs.includes(n.id);
+                    return (
+                      <div
+                        key={n.id}
+                        className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${isUnread ? "bg-primary/5" : ""}`}
+                        onClick={() => setReadNotifs((prev) => [...prev, n.id])}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isUnread ? "bg-primary/10" : "bg-muted"}`}>
+                          <n.icon className={`h-4 w-4 ${isUnread ? "text-primary" : "text-muted-foreground"}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm ${isUnread ? "font-semibold text-foreground" : "text-foreground"}`}>{n.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{n.desc}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{n.time}</p>
+                        </div>
+                        {isUnread && <div className="w-2 h-2 rounded-full gradient-bg shrink-0 mt-2" />}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-border px-4 py-2.5">
+                  <button className="w-full text-xs text-primary hover:underline text-center font-medium">View all notifications</button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* Help button */}
             <button
@@ -507,7 +595,6 @@ export default function Dashboard() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 glass border-border rounded-xl p-0 overflow-hidden">
-                {/* User info header */}
                 <div className="p-4 flex items-center gap-3">
                   <div className="gradient-bg rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold text-primary-foreground shrink-0">
                     {userInitials}
