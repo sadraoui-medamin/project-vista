@@ -41,6 +41,11 @@ import {
   ListChecks,
   UserPlus,
   Timer,
+  Monitor,
+  CreditCard,
+  Key,
+  Eye,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +68,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
   Popover,
@@ -74,7 +80,12 @@ import ProjectsPage from "@/pages/dashboard/ProjectsPage";
 import TimeTrackingPage from "@/pages/dashboard/TimeTrackingPage";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import TeamPage from "@/pages/dashboard/TeamPage";
-import SettingsPage from "@/pages/dashboard/SettingsPage";
+import AccountSettingsPage from "@/pages/dashboard/AccountSettingsPage";
+import BillingPage from "@/pages/dashboard/BillingPage";
+import WorkspaceSettingsPage from "@/pages/dashboard/WorkspaceSettingsPage";
+import PersonalSettingsPage from "@/pages/dashboard/PersonalSettingsPage";
+import UserManagementPage from "@/pages/dashboard/UserManagementPage";
+import LicensingPage from "@/pages/dashboard/LicensingPage";
 import type { Plan } from "@/contexts/AuthContext";
 
 // Define which plan is required for each page
@@ -84,7 +95,12 @@ const pageAccess: Record<string, Plan> = {
   team: "free",
   time: "pro",
   analytics: "pro",
-  settings: "free",
+  accountSettings: "free",
+  billing: "free",
+  workspaceSettings: "free",
+  personalSettings: "free",
+  userManagement: "free",
+  licensing: "free",
 };
 
 const featureLabels: Record<string, string> = {
@@ -357,16 +373,21 @@ export default function Dashboard() {
       case "time": return <TimeTrackingPage />;
       case "analytics": return <AnalyticsPage />;
       case "team": return <TeamPage />;
-      case "settings": return <SettingsPage />;
+      case "accountSettings": return <AccountSettingsPage />;
+      case "billing": return <BillingPage />;
+      case "workspaceSettings": return <WorkspaceSettingsPage />;
+      case "personalSettings": return <PersonalSettingsPage />;
+      case "userManagement": return <UserManagementPage />;
+      case "licensing": return <LicensingPage />;
       default: return <DashboardHome user={user} onNavigate={setActivePage} />;
     }
   };
 
+  // Sidebar nav - no more Settings here
   const sidebarNav = [
     { icon: Clock, label: "Time Tracking", key: "time" },
     { icon: BarChart3, label: "Analytics", key: "analytics" },
     { icon: Users, label: "Team", key: "team" },
-    { icon: Settings, label: "Settings", key: "settings" },
   ];
 
   const userInitials = user?.name
@@ -446,7 +467,6 @@ export default function Dashboard() {
                           <span className="truncate">{ws.name}</span>
                         </button>
                       ))}
-                      {/* + Create new project */}
                       <button
                         onClick={() => setActivePage("projects")}
                         className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-primary hover:bg-muted/50 transition-all font-medium"
@@ -454,7 +474,6 @@ export default function Dashboard() {
                         <Plus className="h-3 w-3" />
                         <span>New Project</span>
                       </button>
-                      {/* Settings / View all workspaces */}
                       <button
                         onClick={() => setActivePage("projects")}
                         className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
@@ -469,7 +488,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Rest of nav items */}
+          {/* Rest of nav items (no Settings) */}
           {sidebarNav.map((item) => {
             const locked = !hasAccess(item.key);
             return (
@@ -523,7 +542,7 @@ export default function Dashboard() {
               <Button
                 size="sm"
                 className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl h-8 text-xs gap-1.5"
-                onClick={() => setActivePage("settings")}
+                onClick={() => setActivePage("billing")}
               >
                 <ArrowUpCircle className="h-3.5 w-3.5" />
                 Upgrade
@@ -587,6 +606,63 @@ export default function Dashboard() {
               <HelpCircle className="h-5 w-5" />
             </button>
 
+            {/* Settings gear dropdown (Jira-style) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                  <Settings className="h-4.5 w-4.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[300px] glass border-border rounded-xl p-0 overflow-hidden">
+                <div className="px-4 py-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ProjectFlow Settings</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setActivePage("workspaceSettings")} className="gap-3 px-4 py-3 cursor-pointer">
+                  <Monitor className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Workspace settings</p>
+                    <p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("personalSettings")} className="gap-3 px-4 py-3 cursor-pointer">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Personal settings</p>
+                    <p className="text-xs text-muted-foreground">Manage notification preferences and themes</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-4 py-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p>
+                </div>
+                <DropdownMenuItem onClick={() => setActivePage("userManagement")} className="gap-3 px-4 py-3 cursor-pointer">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">User management</p>
+                    <p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("licensing")} className="gap-3 px-4 py-3 cursor-pointer">
+                  <Key className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Licensing</p>
+                    <p className="text-xs text-muted-foreground">Server and Data Center licensing</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("billing")} className="gap-3 px-4 py-3 cursor-pointer">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Billing</p>
+                    <p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions, and more</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Profile dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -605,11 +681,14 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setActivePage("settings")} className="gap-3 px-4 py-2.5 cursor-pointer">
-                  <User className="h-4 w-4" /> Profile
+                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer">
+                  <User className="h-4 w-4" /> Profile Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("settings")} className="gap-3 px-4 py-2.5 cursor-pointer">
-                  <Settings className="h-4 w-4" /> Account settings
+                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer">
+                  <Eye className="h-4 w-4" /> Visibility & Privacy
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer">
+                  <Shield className="h-4 w-4" /> Password & Security
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer">
@@ -657,7 +736,7 @@ export default function Dashboard() {
             </DialogDescription>
           </DialogHeader>
           <Button
-            onClick={() => { setUpgradeDialog(null); setActivePage("settings"); }}
+            onClick={() => { setUpgradeDialog(null); setActivePage("billing"); }}
             className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl px-6 gap-2 w-full"
           >
             <ArrowUpCircle className="h-4 w-4" />
