@@ -1,51 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard,
-  KanbanSquare,
-  Clock,
-  BarChart3,
-  Settings,
-  Users,
-  Bell,
-  Search,
-  Plus,
-  LogOut,
-  Zap,
-  ChevronRight,
-  ChevronDown,
-  MoreHorizontal,
-  ArrowUpCircle,
-  Lock,
-  HelpCircle,
-  User,
-  Palette,
-  ArrowRightLeft,
-  X,
-  ExternalLink,
-  FileText,
-  BookOpen,
-  GraduationCap,
-  MessageCircle,
-  AlertTriangle,
-  MessageSquare,
-  Keyboard,
-  Smartphone,
-  Sparkles,
-  CheckCircle2,
-  TrendingUp,
-  Activity,
-  Calendar,
-  Target,
-  FolderPlus,
-  ListChecks,
-  UserPlus,
-  Timer,
-  Monitor,
-  CreditCard,
-  Key,
-  Eye,
-  Shield,
+  LayoutDashboard, KanbanSquare, Clock, BarChart3, Settings, Users, Bell,
+  Search, Plus, LogOut, Zap, ChevronRight, ChevronDown, MoreHorizontal,
+  ArrowUpCircle, Lock, HelpCircle, User, Palette, ArrowRightLeft, X,
+  ExternalLink, FileText, BookOpen, GraduationCap, MessageCircle,
+  AlertTriangle, MessageSquare, Keyboard, Smartphone, Sparkles, CheckCircle2,
+  TrendingUp, Activity, Calendar, Target, FolderPlus, ListChecks, UserPlus,
+  Timer, Monitor, CreditCard, Key, Eye, Shield, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,28 +15,15 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
+  DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { generateSampleTasks, SHARED_MEMBERS, TEMPLATES, type Workspace } from "@/types/workspace";
 
 import ProjectsPage from "@/pages/dashboard/ProjectsPage";
 import TimeTrackingPage from "@/pages/dashboard/TimeTrackingPage";
@@ -88,32 +37,18 @@ import UserManagementPage from "@/pages/dashboard/UserManagementPage";
 import LicensingPage from "@/pages/dashboard/LicensingPage";
 import type { Plan } from "@/contexts/AuthContext";
 
-// Define which plan is required for each page
 const pageAccess: Record<string, Plan> = {
-  dashboard: "free",
-  projects: "free",
-  team: "free",
-  time: "pro",
-  analytics: "pro",
-  accountSettings: "free",
-  billing: "free",
-  workspaceSettings: "free",
-  personalSettings: "free",
-  userManagement: "free",
-  licensing: "free",
+  dashboard: "free", projects: "free", team: "free", time: "pro", analytics: "pro",
+  accountSettings: "free", billing: "free", workspaceSettings: "free",
+  personalSettings: "free", userManagement: "free", licensing: "free",
 };
-
-const featureLabels: Record<string, string> = {
-  time: "Time Tracking",
-  analytics: "Analytics",
-};
-
+const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics" };
 const planRank: Record<Plan, number> = { free: 0, pro: 1, enterprise: 2 };
 
-const recentWorkspaces = [
-  { id: "1", name: "Q1 Sprint Board", icon: "🏃" },
-  { id: "2", name: "Product Roadmap", icon: "📋" },
-  { id: "3", name: "Bug Triage", icon: "🐛" },
+const initialWorkspaces: Workspace[] = [
+  { id: "1", name: "Q1 Sprint Board", description: "Main development sprint for Q1 2026", template: "scrum", members: SHARED_MEMBERS.slice(0, 5), tasks: generateSampleTasks("scrum"), createdAt: "Jan 10, 2026", color: "from-accent to-primary" },
+  { id: "2", name: "Product Roadmap", description: "High-level project tracking for all teams", template: "kanban", members: SHARED_MEMBERS.slice(0, 6), tasks: generateSampleTasks("kanban"), createdAt: "Dec 5, 2025", color: "from-primary to-accent" },
+  { id: "3", name: "Bug Triage", description: "Track and resolve all reported bugs", template: "bug-tracking", members: SHARED_MEMBERS.slice(2, 7), tasks: generateSampleTasks("bug-tracking"), createdAt: "Feb 1, 2026", color: "from-destructive to-primary" },
 ];
 
 const projects = [
@@ -131,20 +66,14 @@ const recentTasks = [
 ];
 
 const statusColors: Record<string, string> = {
-  "In Progress": "bg-accent/20 text-accent",
-  "In Review": "bg-primary/20 text-primary",
-  Done: "bg-green-500/20 text-green-500",
-  "To Do": "bg-muted text-muted-foreground",
+  "In Progress": "bg-accent/20 text-accent", "In Review": "bg-primary/20 text-primary",
+  Done: "bg-green-500/20 text-green-500", "To Do": "bg-muted text-muted-foreground",
 };
-
 const priorityColors: Record<string, string> = {
-  Critical: "bg-destructive/20 text-destructive",
-  High: "bg-orange-500/20 text-orange-500",
-  Medium: "bg-primary/20 text-primary",
-  Low: "bg-muted text-muted-foreground",
+  Critical: "bg-destructive/20 text-destructive", High: "bg-orange-500/20 text-orange-500",
+  Medium: "bg-primary/20 text-primary", Low: "bg-muted text-muted-foreground",
 };
 
-// ──── Notifications data ────
 const notifications = [
   { id: 1, title: "New task assigned to you", desc: "Fix checkout flow bug", time: "2 min ago", unread: true, icon: ListChecks },
   { id: 2, title: "Maria completed a task", desc: "Design system tokens", time: "15 min ago", unread: true, icon: CheckCircle2 },
@@ -153,7 +82,6 @@ const notifications = [
   { id: 5, title: "Deployment succeeded", desc: "API Integration v2.1.0", time: "5 hours ago", unread: false, icon: Sparkles },
 ];
 
-// ──── Help panel links (Jira-style) ────
 const helpLinks = [
   { icon: Sparkles, label: "Find out what's changed", external: true },
   { icon: BookOpen, label: "Read about the new navigation", external: true },
@@ -162,7 +90,6 @@ const helpLinks = [
   { icon: MessageCircle, label: "Ask our Community forums", external: true },
   { icon: AlertTriangle, label: "Contact support", external: true },
 ];
-
 const helpActions = [
   { icon: MessageSquare, label: "Give feedback about ProjectFlow", highlight: true },
   { icon: Keyboard, label: "Keyboard shortcuts", highlight: false },
@@ -172,24 +99,15 @@ const helpActions = [
 function HelpPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      className="fixed top-14 right-28 z-50 w-[320px] glass-strong rounded-xl shadow-2xl border border-border overflow-hidden"
-    >
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+      className="fixed top-14 right-28 z-50 w-[320px] glass-strong rounded-xl shadow-2xl border border-border overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <h3 className="font-semibold text-foreground">Help</h3>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X className="h-4 w-4" />
-        </button>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
       </div>
       <div className="py-2">
         {helpLinks.map((link) => (
-          <button
-            key={link.label}
-            className="flex items-center gap-3 w-full px-5 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
-          >
+          <button key={link.label} className="flex items-center gap-3 w-full px-5 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors">
             <link.icon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="flex-1 text-left">{link.label}</span>
             {link.external && <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -198,14 +116,7 @@ function HelpPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
       </div>
       <div className="border-t border-border py-2">
         {helpActions.map((action) => (
-          <button
-            key={action.label}
-            className={`flex items-center gap-3 w-full px-5 py-2.5 text-sm transition-colors ${
-              action.highlight
-                ? "text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 mx-2 w-[calc(100%-16px)] rounded-lg"
-                : "text-foreground hover:bg-muted/50"
-            }`}
-          >
+          <button key={action.label} className={`flex items-center gap-3 w-full px-5 py-2.5 text-sm transition-colors ${action.highlight ? "text-primary hover:bg-primary/5" : "text-foreground hover:bg-muted/50"}`}>
             <action.icon className={`h-4 w-4 shrink-0 ${action.highlight ? "text-primary" : "text-muted-foreground"}`} />
             <span className="flex-1 text-left">{action.label}</span>
             {"external" in action && action.external && <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -231,7 +142,6 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
         <p className="text-muted-foreground text-sm mt-1">Here's what's happening with your projects today.</p>
       </div>
 
-      {/* KPI Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Active Tasks", value: "24", change: "+3 today", icon: ListChecks, color: "text-primary" },
@@ -250,7 +160,6 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="font-semibold text-foreground mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -260,11 +169,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
             { label: "Invite Member", icon: UserPlus, action: () => onNavigate("team") },
             { label: "View Reports", icon: BarChart3, action: () => onNavigate("analytics") },
           ].map((qa) => (
-            <button
-              key={qa.label}
-              onClick={qa.action}
-              className="glass rounded-xl p-4 flex flex-col items-center gap-2 hover:gradient-shadow transition-all group"
-            >
+            <button key={qa.label} onClick={qa.action} className="glass rounded-xl p-4 flex flex-col items-center gap-2 hover:gradient-shadow transition-all group">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                 <qa.icon className="h-5 w-5 text-primary" />
               </div>
@@ -274,7 +179,6 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
         </div>
       </div>
 
-      {/* Activity overview row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Tasks Due Today", value: "5", icon: Target, bg: "bg-destructive/10", color: "text-destructive" },
@@ -310,8 +214,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
                 <div className={`h-full rounded-full bg-gradient-to-r ${project.color}`} style={{ width: `${project.progress}%` }} />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{project.progress}% complete</span>
-                <span>{project.tasks} tasks</span>
+                <span>{project.progress}% complete</span><span>{project.tasks} tasks</span>
               </div>
             </div>
           ))}
@@ -326,9 +229,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
             <div className="divide-y divide-border">
               {recentTasks.map((task) => (
                 <div key={task.title} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
-                  </div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground truncate">{task.title}</p></div>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${statusColors[task.status]}`}>{task.status}</span>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 hidden sm:inline ${priorityColors[task.priority]}`}>{task.priority}</span>
                   <div className="gradient-bg rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold text-primary-foreground shrink-0">{task.assignee}</div>
@@ -352,24 +253,53 @@ export default function Dashboard() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [readNotifs, setReadNotifs] = useState<number[]>([]);
+  // Shared workspace state lifted here
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
+  // To navigate directly into a workspace from sidebar
+  const [directWorkspaceId, setDirectWorkspaceId] = useState<string | null>(null);
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<Workspace | null>(null);
 
-  const handleSignOut = () => {
-    signOut();
-    navigate("/");
-  };
-
+  const handleSignOut = () => { signOut(); navigate("/"); };
   const userPlan = user?.plan || "free";
   const hasAccess = (page: string) => {
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
   };
-
   const markAllRead = () => setReadNotifs(notifications.map((n) => n.id));
   const unreadCount = notifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
+  const handleCreateWorkspace = useCallback((ws: Workspace) => {
+    setWorkspaces((prev) => [ws, ...prev]);
+  }, []);
+
+  const handleUpdateWorkspace = useCallback((updated: Workspace) => {
+    setWorkspaces((prev) => prev.map((w) => w.id === updated.id ? updated : w));
+  }, []);
+
+  const handleDeleteWorkspace = useCallback((id: string) => {
+    setWorkspaces((prev) => prev.filter((w) => w.id !== id));
+    setDeleteTarget(null);
+  }, []);
+
+  const openWorkspaceDirectly = (wsId: string) => {
+    setDirectWorkspaceId(wsId);
+    setActivePage("projects");
+  };
+
   const renderPage = () => {
     switch (activePage) {
-      case "projects": return <ProjectsPage />;
+      case "projects":
+        return (
+          <ProjectsPage
+            workspaces={workspaces}
+            onCreate={handleCreateWorkspace}
+            onUpdate={handleUpdateWorkspace}
+            onDelete={(ws) => setDeleteTarget(ws)}
+            initialWorkspaceId={directWorkspaceId}
+            onClearDirect={() => setDirectWorkspaceId(null)}
+          />
+        );
       case "time": return <TimeTrackingPage />;
       case "analytics": return <AnalyticsPage />;
       case "team": return <TeamPage />;
@@ -383,7 +313,6 @@ export default function Dashboard() {
     }
   };
 
-  // Sidebar nav - no more Settings here
   const sidebarNav = [
     { icon: Clock, label: "Time Tracking", key: "time" },
     { icon: BarChart3, label: "Analytics", key: "analytics" },
@@ -394,48 +323,28 @@ export default function Dashboard() {
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
 
+  const recentWorkspaces = workspaces.slice(0, 4);
+
   return (
     <div className="min-h-screen bg-background flex">
-      <motion.aside
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        className={`glass border-r border-border flex flex-col ${collapsed ? "w-16" : "w-60"} transition-all duration-300 shrink-0`}
-      >
+      <motion.aside initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+        className={`glass border-r border-border flex flex-col ${collapsed ? "w-16" : "w-60"} transition-all duration-300 shrink-0`}>
         <div className="p-4 flex items-center gap-2">
           <div className="gradient-bg rounded-lg p-1.5 shrink-0"><Zap className="h-4 w-4 text-primary-foreground" /></div>
           {!collapsed && <span className="font-bold text-foreground truncate">ProjectFlow</span>}
         </div>
 
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-          {/* Dashboard */}
-          <button
-            onClick={() => setActivePage("dashboard")}
-            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${
-              activePage === "dashboard"
-                ? "gradient-bg text-primary-foreground gradient-shadow"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
-          >
+          <button onClick={() => { setActivePage("dashboard"); setDirectWorkspaceId(null); }}
+            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${activePage === "dashboard" ? "gradient-bg text-primary-foreground gradient-shadow" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
             <LayoutDashboard className="h-4 w-4 shrink-0" />
             {!collapsed && <span>Dashboard</span>}
           </button>
 
           {/* Manage Projects - expandable */}
           <div>
-            <button
-              onClick={() => {
-                if (collapsed) {
-                  setActivePage("projects");
-                } else {
-                  setProjectsExpanded(!projectsExpanded);
-                }
-              }}
-              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${
-                activePage === "projects"
-                  ? "gradient-bg text-primary-foreground gradient-shadow"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
-            >
+            <button onClick={() => { if (collapsed) { setActivePage("projects"); setDirectWorkspaceId(null); } else setProjectsExpanded(!projectsExpanded); }}
+              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${activePage === "projects" ? "gradient-bg text-primary-foreground gradient-shadow" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
               <KanbanSquare className="h-4 w-4 shrink-0" />
               {!collapsed && (
                 <>
@@ -445,41 +354,34 @@ export default function Dashboard() {
               )}
             </button>
 
-            {/* Sub-items */}
             {!collapsed && (
               <AnimatePresence>
                 {projectsExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                     <div className="ml-4 mt-1 space-y-0.5 border-l border-border pl-3">
-                      {recentWorkspaces.map((ws) => (
-                        <button
-                          key={ws.id}
-                          onClick={() => setActivePage("projects")}
-                          className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all truncate"
-                        >
-                          <span className="text-sm">{ws.icon}</span>
-                          <span className="truncate">{ws.name}</span>
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => setActivePage("projects")}
-                        className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-primary hover:bg-muted/50 transition-all font-medium"
-                      >
-                        <Plus className="h-3 w-3" />
-                        <span>New Project</span>
+                      {recentWorkspaces.map((ws) => {
+                        const tpl = TEMPLATES.find((t) => t.key === ws.template);
+                        return (
+                          <div key={ws.id} className="flex items-center group">
+                            <button onClick={() => openWorkspaceDirectly(ws.id)}
+                              className="flex items-center gap-2 flex-1 min-w-0 px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all truncate">
+                              <span className="text-sm">{tpl?.icon || "📋"}</span>
+                              <span className="truncate">{ws.name}</span>
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(ws); }}
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-destructive transition-all shrink-0">
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <button onClick={() => { setActivePage("projects"); setDirectWorkspaceId(null); }}
+                        className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-primary hover:bg-muted/50 transition-all font-medium">
+                        <Plus className="h-3 w-3" /><span>New Project</span>
                       </button>
-                      <button
-                        onClick={() => setActivePage("projects")}
-                        className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-                      >
-                        <Settings className="h-3 w-3" />
-                        <span>My Workspaces</span>
+                      <button onClick={() => { setActivePage("projects"); setDirectWorkspaceId(null); }}
+                        className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
+                        <Settings className="h-3 w-3" /><span>My Workspaces</span>
                       </button>
                     </div>
                   </motion.div>
@@ -488,31 +390,15 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Rest of nav items (no Settings) */}
           {sidebarNav.map((item) => {
             const locked = !hasAccess(item.key);
             return (
-              <button
-                key={item.key}
-                onClick={() => locked ? setUpgradeDialog(item.key) : setActivePage(item.key)}
-                className={`relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${
-                  activePage === item.key && !locked
-                    ? "gradient-bg text-primary-foreground gradient-shadow"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
+              <button key={item.key} onClick={() => locked ? setUpgradeDialog(item.key) : setActivePage(item.key)}
+                className={`relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${activePage === item.key && !locked ? "gradient-bg text-primary-foreground gradient-shadow" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 <item.icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
-                {locked && !collapsed && (
-                  <span className="ml-auto bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center shrink-0">
-                    <Lock className="h-3 w-3 text-black" />
-                  </span>
-                )}
-                {locked && collapsed && (
-                  <span className="absolute -top-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center">
-                    <Lock className="h-2.5 w-2.5 text-black" />
-                  </span>
-                )}
+                {locked && !collapsed && <span className="ml-auto bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center shrink-0"><Lock className="h-3 w-3 text-black" /></span>}
+                {locked && collapsed && <span className="absolute -top-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center"><Lock className="h-2.5 w-2.5 text-black" /></span>}
               </button>
             );
           })}
@@ -520,8 +406,7 @@ export default function Dashboard() {
 
         <div className="p-3 border-t border-border">
           <button onClick={handleSignOut} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive transition-colors">
-            <LogOut className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Sign Out</span>}
+            <LogOut className="h-4 w-4 shrink-0" />{!collapsed && <span>Sign Out</span>}
           </button>
         </div>
       </motion.aside>
@@ -539,30 +424,19 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             {user?.plan === "free" && (
-              <Button
-                size="sm"
-                className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl h-8 text-xs gap-1.5"
-                onClick={() => setActivePage("billing")}
-              >
-                <ArrowUpCircle className="h-3.5 w-3.5" />
-                Upgrade
+              <Button size="sm" className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl h-8 text-xs gap-1.5" onClick={() => setActivePage("billing")}>
+                <ArrowUpCircle className="h-3.5 w-3.5" /> Upgrade
               </Button>
             )}
-            {user?.plan && user.plan !== "free" && (
-              <span className="text-xs font-semibold gradient-text uppercase">{user.plan}</span>
-            )}
+            {user?.plan && user.plan !== "free" && <span className="text-xs font-semibold gradient-text uppercase">{user.plan}</span>}
             <ThemeToggle />
 
-            {/* Notifications dropdown */}
+            {/* Notifications */}
             <Popover open={notifOpen} onOpenChange={setNotifOpen}>
               <PopoverTrigger asChild>
                 <button className="relative text-muted-foreground hover:text-foreground">
                   <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full gradient-bg text-[9px] font-bold text-primary-foreground flex items-center justify-center">
-                      {unreadCount}
-                    </span>
-                  )}
+                  {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full gradient-bg text-[9px] font-bold text-primary-foreground flex items-center justify-center">{unreadCount}</span>}
                 </button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-[360px] p-0 glass border-border rounded-xl overflow-hidden">
@@ -574,11 +448,8 @@ export default function Dashboard() {
                   {notifications.map((n) => {
                     const isUnread = n.unread && !readNotifs.includes(n.id);
                     return (
-                      <div
-                        key={n.id}
-                        className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${isUnread ? "bg-primary/5" : ""}`}
-                        onClick={() => setReadNotifs((prev) => [...prev, n.id])}
-                      >
+                      <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${isUnread ? "bg-primary/5" : ""}`}
+                        onClick={() => setReadNotifs((prev) => [...prev, n.id])}>
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isUnread ? "bg-primary/10" : "bg-muted"}`}>
                           <n.icon className={`h-4 w-4 ${isUnread ? "text-primary" : "text-muted-foreground"}`} />
                         </div>
@@ -598,66 +469,43 @@ export default function Dashboard() {
               </PopoverContent>
             </Popover>
 
-            {/* Help button */}
-            <button
-              onClick={() => setHelpOpen(!helpOpen)}
-              className={`text-muted-foreground hover:text-foreground transition-colors ${helpOpen ? "text-primary" : ""}`}
-            >
+            <button onClick={() => setHelpOpen(!helpOpen)} className={`text-muted-foreground hover:text-foreground transition-colors ${helpOpen ? "text-primary" : ""}`}>
               <HelpCircle className="h-5 w-5" />
             </button>
 
-            {/* Settings gear dropdown (Jira-style) */}
+            {/* Settings gear dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-                  <Settings className="h-4.5 w-4.5" />
+                  <Settings className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[300px] glass border-border rounded-xl p-0 overflow-hidden">
-                <div className="px-4 py-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ProjectFlow Settings</p>
-                </div>
+                <div className="px-4 py-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ProjectFlow Settings</p></div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setActivePage("workspaceSettings")} className="gap-3 px-4 py-3 cursor-pointer">
                   <Monitor className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Workspace settings</p>
-                    <p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p>
-                  </div>
+                  <div><p className="text-sm font-medium">Workspace settings</p><p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p></div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActivePage("personalSettings")} className="gap-3 px-4 py-3 cursor-pointer">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Personal settings</p>
-                    <p className="text-xs text-muted-foreground">Manage notification preferences and themes</p>
-                  </div>
+                  <div><p className="text-sm font-medium">Personal settings</p><p className="text-xs text-muted-foreground">Manage notification preferences and themes</p></div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <div className="px-4 py-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p>
-                </div>
+                <div className="px-4 py-2"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p></div>
                 <DropdownMenuItem onClick={() => setActivePage("userManagement")} className="gap-3 px-4 py-3 cursor-pointer">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">User management</p>
-                    <p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p>
-                  </div>
+                  <div className="flex-1"><p className="text-sm font-medium">User management</p><p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p></div>
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActivePage("licensing")} className="gap-3 px-4 py-3 cursor-pointer">
                   <Key className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Licensing</p>
-                    <p className="text-xs text-muted-foreground">Server and Data Center licensing</p>
-                  </div>
+                  <div className="flex-1"><p className="text-sm font-medium">Licensing</p><p className="text-xs text-muted-foreground">Server and Data Center licensing</p></div>
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActivePage("billing")} className="gap-3 px-4 py-3 cursor-pointer">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Billing</p>
-                    <p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions, and more</p>
-                  </div>
+                  <div className="flex-1"><p className="text-sm font-medium">Billing</p><p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions</p></div>
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -666,34 +514,22 @@ export default function Dashboard() {
             {/* Profile dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity">
-                  {userInitials}
-                </button>
+                <button className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity">{userInitials}</button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 glass border-border rounded-xl p-0 overflow-hidden">
                 <div className="p-4 flex items-center gap-3">
-                  <div className="gradient-bg rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold text-primary-foreground shrink-0">
-                    {userInitials}
-                  </div>
+                  <div className="gradient-bg rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold text-primary-foreground shrink-0">{userInitials}</div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{user?.name || "User"}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email || "user@example.com"}</p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer">
-                  <User className="h-4 w-4" /> Profile Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer">
-                  <Eye className="h-4 w-4" /> Visibility & Privacy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer">
-                  <Shield className="h-4 w-4" /> Password & Security
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer"><User className="h-4 w-4" /> Profile Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer"><Eye className="h-4 w-4" /> Visibility & Privacy</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer"><Shield className="h-4 w-4" /> Password & Security</DropdownMenuItem>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer">
-                    <Palette className="h-4 w-4" /> Theme
-                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer"><Palette className="h-4 w-4" /> Theme</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="glass border-border rounded-xl">
                     <DropdownMenuItem className="cursor-pointer text-sm">Light</DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer text-sm">Dark</DropdownMenuItem>
@@ -701,46 +537,49 @@ export default function Dashboard() {
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-3 px-4 py-2.5 cursor-pointer">
-                  <ArrowRightLeft className="h-4 w-4" /> Switch account
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut} className="gap-3 px-4 py-2.5 cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="h-4 w-4" /> Log out
-                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-3 px-4 py-2.5 cursor-pointer"><ArrowRightLeft className="h-4 w-4" /> Switch account</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut} className="gap-3 px-4 py-2.5 cursor-pointer text-destructive focus:text-destructive"><LogOut className="h-4 w-4" /> Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
 
-        <main className="flex-1 p-6 overflow-auto">
-          {renderPage()}
-        </main>
+        <main className="flex-1 p-6 overflow-auto">{renderPage()}</main>
       </div>
 
-      {/* Help panel */}
-      <AnimatePresence>
-        {helpOpen && <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />}
-      </AnimatePresence>
+      <AnimatePresence>{helpOpen && <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />}</AnimatePresence>
 
+      {/* Delete workspace confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="glass border-border rounded-2xl max-w-sm">
+          <DialogHeader className="text-center items-center">
+            <div className="bg-destructive/10 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-2">
+              <Trash2 className="h-6 w-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-foreground">Delete Workspace</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Are you sure you want to delete <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span>? This action cannot be undone and all tasks will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="flex-1 rounded-xl">Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteTarget && handleDeleteWorkspace(deleteTarget.id)} className="flex-1 rounded-xl">Delete</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upgrade dialog */}
       <Dialog open={!!upgradeDialog} onOpenChange={(open) => !open && setUpgradeDialog(null)}>
         <DialogContent className="glass border-border rounded-2xl max-w-sm">
           <DialogHeader className="text-center items-center">
-            <div className="gradient-bg rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-2">
-              <Lock className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <DialogTitle className="text-lg font-bold text-foreground">
-              {featureLabels[upgradeDialog || ""] || upgradeDialog} is locked
-            </DialogTitle>
+            <div className="gradient-bg rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-2"><Lock className="h-6 w-6 text-primary-foreground" /></div>
+            <DialogTitle className="text-lg font-bold text-foreground">{featureLabels[upgradeDialog || ""] || upgradeDialog} is locked</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               Upgrade to the <span className="font-semibold gradient-text capitalize">{pageAccess[upgradeDialog || ""] || "pro"}</span> plan to unlock this feature.
             </DialogDescription>
           </DialogHeader>
-          <Button
-            onClick={() => { setUpgradeDialog(null); setActivePage("billing"); }}
-            className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl px-6 gap-2 w-full"
-          >
-            <ArrowUpCircle className="h-4 w-4" />
-            Upgrade Now
+          <Button onClick={() => { setUpgradeDialog(null); setActivePage("billing"); }} className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl px-6 gap-2 w-full">
+            <ArrowUpCircle className="h-4 w-4" /> Upgrade Now
           </Button>
         </DialogContent>
       </Dialog>
