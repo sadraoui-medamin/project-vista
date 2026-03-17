@@ -320,7 +320,7 @@ export default function Dashboard() {
       case "personalSettings": return <PersonalSettingsPage />;
       case "userManagement": return <UserManagementPage />;
       case "licensing": return <LicensingPage />;
-      default: return <DashboardHome user={user} onNavigate={setActivePage} />;
+      default: return <DashboardHome user={activeAccount} onNavigate={setActivePage} />;
     }
   };
 
