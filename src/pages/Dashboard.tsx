@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, KanbanSquare, Clock, BarChart3, Settings, Users, Bell,
@@ -7,11 +7,11 @@ import {
   ExternalLink, FileText, BookOpen, GraduationCap, MessageCircle,
   AlertTriangle, MessageSquare, Keyboard, Smartphone, Sparkles, CheckCircle2,
   TrendingUp, Activity, Calendar, Target, FolderPlus, ListChecks, UserPlus,
-  Timer, Monitor, CreditCard, Key, Eye, Shield, Trash2,
+  Timer, Monitor, CreditCard, Key, Eye, Shield, Trash2, Check,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
