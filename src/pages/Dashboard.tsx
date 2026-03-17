@@ -330,9 +330,8 @@ export default function Dashboard() {
     { icon: Users, label: "Team", key: "team" },
   ];
 
-  const userInitials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "U";
+  const getInitials = (name: string) => name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2);
+  const userInitials = getInitials(activeAccount.name || "User");
 
   const recentWorkspaces = workspaces.slice(0, 4);
 
