@@ -248,7 +248,18 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
+    () => [
+      { id: "current", name: user?.name || "User", email: user?.email || "user@example.com", plan: user?.plan || "free" },
+      { id: "studio", name: "Maya Chen", email: "maya@projectflow.app", plan: "pro" },
+      { id: "ops", name: "Noah Parker", email: "noah@projectflow.app", plan: "enterprise" },
+    ],
+    [user],
+  );
+  const [activeAccountId, setActiveAccountId] = useState("current");
+  const activeAccount = accountOptions.find((account) => account.id === activeAccountId) ?? accountOptions[0];
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
   const [upgradeDialog, setUpgradeDialog] = useState<string | null>(null);
@@ -256,15 +267,12 @@ export default function Dashboard() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [readNotifs, setReadNotifs] = useState<number[]>([]);
-  // Shared workspace state lifted here
   const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
-  // To navigate directly into a workspace from sidebar
   const [directWorkspaceId, setDirectWorkspaceId] = useState<string | null>(null);
-  // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<Workspace | null>(null);
 
   const handleSignOut = () => { signOut(); navigate("/"); };
-  const userPlan = user?.plan || "free";
+  const userPlan = activeAccount.plan || "free";
   const hasAccess = (page: string) => {
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
