@@ -183,8 +183,8 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Tasks Due Today", value: "5", icon: Target, bg: "bg-destructive/10", color: "text-destructive" },
-          { label: "Weekly Velocity", value: "32", icon: TrendingUp, bg: "bg-green-500/10", color: "text-green-500" },
-          { label: "Open PRs", value: "4", icon: Activity, bg: "bg-orange-500/10", color: "text-orange-500" },
+          { label: "Weekly Velocity", value: "32", icon: TrendingUp, bg: "bg-primary/10", color: "text-primary" },
+          { label: "Open PRs", value: "4", icon: Activity, bg: "bg-accent/10", color: "text-accent" },
           { label: "Upcoming Meetings", value: "2", icon: Calendar, bg: "bg-primary/10", color: "text-primary" },
         ].map((stat) => (
           <div key={stat.label} className={`glass rounded-2xl p-4 border-l-4 ${stat.bg.replace("/10", "/30")}`}>
@@ -196,6 +196,8 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
           </div>
         ))}
       </div>
+
+      <DashboardStatsCharts />
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4">
