@@ -433,15 +433,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {user?.plan === "free" && (
+            {userPlan === "free" && (
               <Button size="sm" className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl h-8 text-xs gap-1.5" onClick={() => setActivePage("billing")}>
                 <ArrowUpCircle className="h-3.5 w-3.5" /> Upgrade
               </Button>
             )}
-            {user?.plan && user.plan !== "free" && <span className="text-xs font-semibold gradient-text uppercase">{user.plan}</span>}
-            <ThemeToggle />
+            {userPlan !== "free" && <span className="text-xs font-semibold gradient-text uppercase">{userPlan}</span>}
 
-            {/* Notifications */}
             <Popover open={notifOpen} onOpenChange={setNotifOpen}>
               <PopoverTrigger asChild>
                 <button className="relative text-muted-foreground hover:text-foreground">
@@ -459,7 +457,7 @@ export default function Dashboard() {
                     const isUnread = n.unread && !readNotifs.includes(n.id);
                     return (
                       <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${isUnread ? "bg-primary/5" : ""}`}
-                        onClick={() => setReadNotifs((prev) => [...prev, n.id])}>
+                        onClick={() => setReadNotifs((prev) => [...new Set([...prev, n.id])])}>
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isUnread ? "bg-primary/10" : "bg-muted"}`}>
                           <n.icon className={`h-4 w-4 ${isUnread ? "text-primary" : "text-muted-foreground"}`} />
                         </div>
@@ -483,7 +481,6 @@ export default function Dashboard() {
               <HelpCircle className="h-5 w-5" />
             </button>
 
-            {/* Settings gear dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
@@ -521,17 +518,16 @@ export default function Dashboard() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Profile dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity">{userInitials}</button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 glass border-border rounded-xl p-0 overflow-hidden">
+              <DropdownMenuContent align="end" className="w-72 glass border-border rounded-xl p-0 overflow-hidden">
                 <div className="p-4 flex items-center gap-3">
                   <div className="gradient-bg rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold text-primary-foreground shrink-0">{userInitials}</div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{user?.name || "User"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email || "user@example.com"}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{activeAccount.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{activeAccount.email}</p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
@@ -540,14 +536,35 @@ export default function Dashboard() {
                 <DropdownMenuItem onClick={() => setActivePage("accountSettings")} className="gap-3 px-4 py-2.5 cursor-pointer"><Shield className="h-4 w-4" /> Password & Security</DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer"><Palette className="h-4 w-4" /> Theme</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="glass border-border rounded-xl">
-                    <DropdownMenuItem className="cursor-pointer text-sm">Light</DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer text-sm">Dark</DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer text-sm">System</DropdownMenuItem>
+                  <DropdownMenuSubContent className="glass border-border rounded-xl min-w-52">
+                    {[
+                      { key: "system", label: "Browser default" },
+                      { key: "dark", label: "Dark" },
+                      { key: "light", label: "Light" },
+                    ].map((option) => (
+                      <DropdownMenuItem key={option.key} onClick={() => setTheme(option.key)} className="cursor-pointer text-sm flex items-center justify-between gap-3">
+                        <span>{option.label}</span>
+                        {theme === option.key && <Check className="h-4 w-4 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer"><ArrowRightLeft className="h-4 w-4" /> Switch account</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="glass border-border rounded-xl min-w-64">
+                    {accountOptions.map((account) => (
+                      <DropdownMenuItem key={account.id} onClick={() => setActiveAccountId(account.id)} className="cursor-pointer gap-3 px-3 py-2.5">
+                        <div className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">{getInitials(account.name)}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">{account.email}</p>
+                        </div>
+                        {activeAccountId === account.id && <Check className="h-4 w-4 text-primary shrink-0" />}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-3 px-4 py-2.5 cursor-pointer"><ArrowRightLeft className="h-4 w-4" /> Switch account</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut} className="gap-3 px-4 py-2.5 cursor-pointer text-destructive focus:text-destructive"><LogOut className="h-4 w-4" /> Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
