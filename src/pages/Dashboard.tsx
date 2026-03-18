@@ -35,11 +35,12 @@ import WorkspaceSettingsPage from "@/pages/dashboard/WorkspaceSettingsPage";
 import PersonalSettingsPage from "@/pages/dashboard/PersonalSettingsPage";
 import UserManagementPage from "@/pages/dashboard/UserManagementPage";
 import LicensingPage from "@/pages/dashboard/LicensingPage";
+import ChatPage from "@/pages/dashboard/ChatPage";
 import { DashboardStatsCharts } from "@/components/dashboard/DashboardStatsCharts";
 import type { Plan } from "@/contexts/AuthContext";
 
 const pageAccess: Record<string, Plan> = {
-  dashboard: "free", projects: "free", team: "free", time: "pro", analytics: "pro",
+  dashboard: "free", projects: "free", team: "free", time: "pro", analytics: "pro", chat: "free",
   accountSettings: "free", billing: "free", workspaceSettings: "free",
   personalSettings: "free", userManagement: "free", licensing: "free",
 };
@@ -320,11 +321,13 @@ export default function Dashboard() {
       case "personalSettings": return <PersonalSettingsPage />;
       case "userManagement": return <UserManagementPage />;
       case "licensing": return <LicensingPage />;
+      case "chat": return <ChatPage />;
       default: return <DashboardHome user={activeAccount} onNavigate={setActivePage} />;
     }
   };
 
   const sidebarNav = [
+    { icon: MessageSquare, label: "Chat", key: "chat" },
     { icon: Clock, label: "Time Tracking", key: "time" },
     { icon: BarChart3, label: "Analytics", key: "analytics" },
     { icon: Users, label: "Team", key: "team" },
