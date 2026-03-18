@@ -35,6 +35,7 @@ import WorkspaceSettingsPage from "@/pages/dashboard/WorkspaceSettingsPage";
 import PersonalSettingsPage from "@/pages/dashboard/PersonalSettingsPage";
 import UserManagementPage from "@/pages/dashboard/UserManagementPage";
 import LicensingPage from "@/pages/dashboard/LicensingPage";
+import ChatPage from "@/pages/dashboard/ChatPage";
 import { DashboardStatsCharts } from "@/components/dashboard/DashboardStatsCharts";
 import type { Plan } from "@/contexts/AuthContext";
 
