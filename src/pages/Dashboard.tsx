@@ -40,7 +40,7 @@ import { DashboardStatsCharts } from "@/components/dashboard/DashboardStatsChart
 import type { Plan } from "@/contexts/AuthContext";
 
 const pageAccess: Record<string, Plan> = {
-  dashboard: "free", projects: "free", team: "free", time: "pro", analytics: "pro",
+  dashboard: "free", projects: "free", team: "free", time: "pro", analytics: "pro", chat: "free",
   accountSettings: "free", billing: "free", workspaceSettings: "free",
   personalSettings: "free", userManagement: "free", licensing: "free",
 };
