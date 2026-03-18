@@ -327,6 +327,7 @@ export default function Dashboard() {
   };
 
   const sidebarNav = [
+    { icon: MessageSquare, label: "Chat", key: "chat" },
     { icon: Clock, label: "Time Tracking", key: "time" },
     { icon: BarChart3, label: "Analytics", key: "analytics" },
     { icon: Users, label: "Team", key: "team" },
