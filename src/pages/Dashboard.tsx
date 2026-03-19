@@ -278,6 +278,9 @@ export default function Dashboard() {
   const handleSignOut = () => { signOut(); navigate("/"); };
   const userPlan = activeAccount.plan || "free";
   const hasAccess = (page: string) => {
+    // Check role-based permission first
+    if (!hasPermission(page)) return false;
+    // Then check plan-based access
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
   };
