@@ -47,6 +47,9 @@ const pageAccess: Record<string, Plan> = {
 const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics" };
 const planRank: Record<Plan, number> = { free: 0, pro: 1, enterprise: 2 };
 
+// Features that are role-restricted (not plan-restricted)
+const roleRestrictedPages = ["team", "analytics", "billing", "workspaceSettings", "userManagement", "licensing"];
+
 const initialWorkspaces: Workspace[] = [
   { id: "1", name: "Q1 Sprint Board", description: "Main development sprint for Q1 2026", template: "scrum", members: SHARED_MEMBERS.slice(0, 5), tasks: generateSampleTasks("scrum"), createdAt: "Jan 10, 2026", color: "from-accent to-primary" },
   { id: "2", name: "Product Roadmap", description: "High-level project tracking for all teams", template: "kanban", members: SHARED_MEMBERS.slice(0, 6), tasks: generateSampleTasks("kanban"), createdAt: "Dec 5, 2025", color: "from-primary to-accent" },
