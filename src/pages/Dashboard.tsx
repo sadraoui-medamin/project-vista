@@ -504,31 +504,37 @@ export default function Dashboard() {
               <DropdownMenuContent align="end" className="w-[300px] glass border-border rounded-xl p-0 overflow-hidden">
                 <div className="px-4 py-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ProjectFlow Settings</p></div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setActivePage("workspaceSettings")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <Monitor className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-sm font-medium">Workspace settings</p><p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p></div>
-                </DropdownMenuItem>
+                {hasPermission("workspaceSettings") && (
+                  <DropdownMenuItem onClick={() => setActivePage("workspaceSettings")} className="gap-3 px-4 py-3 cursor-pointer">
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    <div><p className="text-sm font-medium">Workspace settings</p><p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p></div>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => setActivePage("personalSettings")} className="gap-3 px-4 py-3 cursor-pointer">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div><p className="text-sm font-medium">Personal settings</p><p className="text-xs text-muted-foreground">Manage notification preferences and themes</p></div>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-4 py-2"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p></div>
-                <DropdownMenuItem onClick={() => setActivePage("userManagement")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1"><p className="text-sm font-medium">User management</p><p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p></div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("licensing")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <Key className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1"><p className="text-sm font-medium">Licensing</p><p className="text-xs text-muted-foreground">Server and Data Center licensing</p></div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("billing")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1"><p className="text-sm font-medium">Billing</p><p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions</p></div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </DropdownMenuItem>
+                {hasPermission("userManagement") && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="px-4 py-2"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p></div>
+                    <DropdownMenuItem onClick={() => setActivePage("userManagement")} className="gap-3 px-4 py-3 cursor-pointer">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1"><p className="text-sm font-medium">User management</p><p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p></div>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActivePage("licensing")} className="gap-3 px-4 py-3 cursor-pointer">
+                      <Key className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1"><p className="text-sm font-medium">Licensing</p><p className="text-xs text-muted-foreground">Server and Data Center licensing</p></div>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActivePage("billing")} className="gap-3 px-4 py-3 cursor-pointer">
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1"><p className="text-sm font-medium">Billing</p><p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions</p></div>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
