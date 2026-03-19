@@ -25,7 +25,8 @@ export function AuthModal({ open, onClose, defaultTab = "signin" }: AuthModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (tab === "signin") {
-      signIn(email, password);
+      const success = signIn(email, password);
+      if (!success) return;
     } else {
       signUp(name, email, password);
     }
