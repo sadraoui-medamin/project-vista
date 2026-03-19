@@ -47,6 +47,9 @@ const pageAccess: Record<string, Plan> = {
 const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics" };
 const planRank: Record<Plan, number> = { free: 0, pro: 1, enterprise: 2 };
 
+// Features that are role-restricted (not plan-restricted)
+const roleRestrictedPages = ["team", "analytics", "billing", "workspaceSettings", "userManagement", "licensing"];
+
 const initialWorkspaces: Workspace[] = [
   { id: "1", name: "Q1 Sprint Board", description: "Main development sprint for Q1 2026", template: "scrum", members: SHARED_MEMBERS.slice(0, 5), tasks: generateSampleTasks("scrum"), createdAt: "Jan 10, 2026", color: "from-accent to-primary" },
   { id: "2", name: "Product Roadmap", description: "High-level project tracking for all teams", template: "kanban", members: SHARED_MEMBERS.slice(0, 6), tasks: generateSampleTasks("kanban"), createdAt: "Dec 5, 2025", color: "from-primary to-accent" },
@@ -248,7 +251,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, hasPermission } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
@@ -275,6 +278,9 @@ export default function Dashboard() {
   const handleSignOut = () => { signOut(); navigate("/"); };
   const userPlan = activeAccount.plan || "free";
   const hasAccess = (page: string) => {
+    // Check role-based permission first
+    if (!hasPermission(page)) return false;
+    // Then check plan-based access
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
   };
@@ -344,7 +350,12 @@ export default function Dashboard() {
         className={`glass border-r border-border flex flex-col ${collapsed ? "w-16" : "w-60"} transition-all duration-300 shrink-0`}>
         <div className="p-4 flex items-center gap-2">
           <div className="gradient-bg rounded-lg p-1.5 shrink-0"><Zap className="h-4 w-4 text-primary-foreground" /></div>
-          {!collapsed && <span className="font-bold text-foreground truncate">ProjectFlow</span>}
+          {!collapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-foreground truncate">ProjectFlow</span>
+              {user?.role && <span className="text-[10px] text-muted-foreground capitalize">{user.role}</span>}
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
@@ -404,14 +415,17 @@ export default function Dashboard() {
           </div>
 
           {sidebarNav.map((item) => {
-            const locked = !hasAccess(item.key);
+            const roleBlocked = !hasPermission(item.key);
+            const planLocked = !hasAccess(item.key) && !roleBlocked;
+            const locked = roleBlocked || planLocked;
+            if (roleBlocked) return null; // Hide items the role can't access at all
             return (
               <button key={item.key} onClick={() => locked ? setUpgradeDialog(item.key) : setActivePage(item.key)}
                 className={`relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all ${activePage === item.key && !locked ? "gradient-bg text-primary-foreground gradient-shadow" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 <item.icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
-                {locked && !collapsed && <span className="ml-auto bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center shrink-0"><Lock className="h-3 w-3 text-black" /></span>}
-                {locked && collapsed && <span className="absolute -top-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center"><Lock className="h-2.5 w-2.5 text-black" /></span>}
+                {planLocked && !collapsed && <span className="ml-auto bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center shrink-0"><Lock className="h-3 w-3 text-black" /></span>}
+                {planLocked && collapsed && <span className="absolute -top-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center"><Lock className="h-2.5 w-2.5 text-black" /></span>}
               </button>
             );
           })}
@@ -493,31 +507,37 @@ export default function Dashboard() {
               <DropdownMenuContent align="end" className="w-[300px] glass border-border rounded-xl p-0 overflow-hidden">
                 <div className="px-4 py-3"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ProjectFlow Settings</p></div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setActivePage("workspaceSettings")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <Monitor className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-sm font-medium">Workspace settings</p><p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p></div>
-                </DropdownMenuItem>
+                {hasPermission("workspaceSettings") && (
+                  <DropdownMenuItem onClick={() => setActivePage("workspaceSettings")} className="gap-3 px-4 py-3 cursor-pointer">
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    <div><p className="text-sm font-medium">Workspace settings</p><p className="text-xs text-muted-foreground">Manage workspace name, domains, user groups and time zone</p></div>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => setActivePage("personalSettings")} className="gap-3 px-4 py-3 cursor-pointer">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div><p className="text-sm font-medium">Personal settings</p><p className="text-xs text-muted-foreground">Manage notification preferences and themes</p></div>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-4 py-2"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p></div>
-                <DropdownMenuItem onClick={() => setActivePage("userManagement")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1"><p className="text-sm font-medium">User management</p><p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p></div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("licensing")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <Key className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1"><p className="text-sm font-medium">Licensing</p><p className="text-xs text-muted-foreground">Server and Data Center licensing</p></div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage("billing")} className="gap-3 px-4 py-3 cursor-pointer">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1"><p className="text-sm font-medium">Billing</p><p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions</p></div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </DropdownMenuItem>
+                {hasPermission("userManagement") && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="px-4 py-2"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin settings</p></div>
+                    <DropdownMenuItem onClick={() => setActivePage("userManagement")} className="gap-3 px-4 py-3 cursor-pointer">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1"><p className="text-sm font-medium">User management</p><p className="text-xs text-muted-foreground">Manage users, groups, and access requests</p></div>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActivePage("licensing")} className="gap-3 px-4 py-3 cursor-pointer">
+                      <Key className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1"><p className="text-sm font-medium">Licensing</p><p className="text-xs text-muted-foreground">Server and Data Center licensing</p></div>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActivePage("billing")} className="gap-3 px-4 py-3 cursor-pointer">
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1"><p className="text-sm font-medium">Billing</p><p className="text-xs text-muted-foreground">Update your billing details, manage subscriptions</p></div>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
