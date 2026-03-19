@@ -350,7 +350,12 @@ export default function Dashboard() {
         className={`glass border-r border-border flex flex-col ${collapsed ? "w-16" : "w-60"} transition-all duration-300 shrink-0`}>
         <div className="p-4 flex items-center gap-2">
           <div className="gradient-bg rounded-lg p-1.5 shrink-0"><Zap className="h-4 w-4 text-primary-foreground" /></div>
-          {!collapsed && <span className="font-bold text-foreground truncate">ProjectFlow</span>}
+          {!collapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-foreground truncate">ProjectFlow</span>
+              {user?.role && <span className="text-[10px] text-muted-foreground capitalize">{user.role}</span>}
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
