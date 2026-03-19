@@ -251,7 +251,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, hasPermission } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
