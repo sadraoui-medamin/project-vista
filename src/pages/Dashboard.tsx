@@ -137,7 +137,36 @@ function HelpPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function DashboardHome({ user, onNavigate }: { user: { name: string; email: string } | null; onNavigate: (page: string) => void }) {
+function DashboardHome({ user, onNavigate, myWorkspaces }: { user: { name: string; email: string } | null; onNavigate: (page: string) => void; myWorkspaces?: Workspace[] }) {
+  // Build personal task list from assigned workspaces
+  const myTasks = useMemo(() => {
+    if (!myWorkspaces || !user) return recentTasks;
+    const userInitial = user.name.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    const assigned: typeof recentTasks = [];
+    myWorkspaces.forEach(ws => {
+      ws.tasks
+        .filter(t => t.assignee === userInitial)
+        .forEach(t => {
+          assigned.push({
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            assignee: t.assignee || userInitial,
+          });
+        });
+    });
+    return assigned.length > 0 ? assigned.slice(0, 5) : recentTasks;
+  }, [myWorkspaces, user]);
+
+  const myProjects = useMemo(() => {
+    if (!myWorkspaces || myWorkspaces.length === 0) return projects;
+    return myWorkspaces.slice(0, 3).map(ws => {
+      const columns = [...new Set(ws.tasks.map(t => t.status))];
+      const done = columns[columns.length - 1];
+      const progress = ws.tasks.length > 0 ? Math.round((ws.tasks.filter(t => t.status === done).length / ws.tasks.length) * 100) : 0;
+      return { name: ws.name, progress, tasks: ws.tasks.length, color: ws.color };
+    });
+  }, [myWorkspaces]);
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div className="mb-8">
