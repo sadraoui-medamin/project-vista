@@ -32,6 +32,7 @@ interface AuthContextType {
   deleteTeamMember: (id: string) => void;
   updateTeamMemberRole: (id: string, role: UserRole) => void;
   hasPermission: (feature: string) => boolean;
+  getMasterEmail: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -174,11 +175,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
+  const getMasterEmail = useCallback((): string | null => {
+    if (!user) return null;
+    if (user.role === "master") return user.email;
+    // Find the master who created this team member
+    const members = getTeamMembers();
+    const me = members.find((m) => m.email === user.email);
+    return me?.createdBy || null;
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
         user, signIn, signUp, signOut, setPlan,
-        teamMembers, createTeamMember, deleteTeamMember, updateTeamMemberRole, hasPermission,
+        teamMembers, createTeamMember, deleteTeamMember, updateTeamMemberRole, hasPermission, getMasterEmail,
       }}
     >
       {children}

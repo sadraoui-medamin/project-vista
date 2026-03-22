@@ -137,7 +137,36 @@ function HelpPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function DashboardHome({ user, onNavigate }: { user: { name: string; email: string } | null; onNavigate: (page: string) => void }) {
+function DashboardHome({ user, onNavigate, myWorkspaces }: { user: { name: string; email: string } | null; onNavigate: (page: string) => void; myWorkspaces?: Workspace[] }) {
+  // Build personal task list from assigned workspaces
+  const myTasks = useMemo(() => {
+    if (!myWorkspaces || !user) return recentTasks;
+    const userInitial = user.name.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    const assigned: typeof recentTasks = [];
+    myWorkspaces.forEach(ws => {
+      ws.tasks
+        .filter(t => t.assignee === userInitial)
+        .forEach(t => {
+          assigned.push({
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            assignee: t.assignee || userInitial,
+          });
+        });
+    });
+    return assigned.length > 0 ? assigned.slice(0, 5) : recentTasks;
+  }, [myWorkspaces, user]);
+
+  const myProjects = useMemo(() => {
+    if (!myWorkspaces || myWorkspaces.length === 0) return projects;
+    return myWorkspaces.slice(0, 3).map(ws => {
+      const columns = [...new Set(ws.tasks.map(t => t.status))];
+      const done = columns[columns.length - 1];
+      const progress = ws.tasks.length > 0 ? Math.round((ws.tasks.filter(t => t.status === done).length / ws.tasks.length) * 100) : 0;
+      return { name: ws.name, progress, tasks: ws.tasks.length, color: ws.color };
+    });
+  }, [myWorkspaces]);
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div className="mb-8">
@@ -211,7 +240,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
               <Plus className="h-3 w-3 mr-1" /> New
             </Button>
           </div>
-          {projects.map((project) => (
+          {myProjects.map((project) => (
             <div key={project.name} className="glass rounded-2xl p-4 hover:gradient-shadow transition-shadow duration-300 cursor-pointer" onClick={() => onNavigate("projects")}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-sm text-foreground">{project.name}</h3>
@@ -234,7 +263,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
           </div>
           <div className="glass rounded-2xl overflow-hidden">
             <div className="divide-y divide-border">
-              {recentTasks.map((task) => (
+              {myTasks.map((task) => (
                 <div key={task.title} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
                   <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground truncate">{task.title}</p></div>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${statusColors[task.status]}`}>{task.status}</span>
@@ -251,7 +280,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
 }
 
 export default function Dashboard() {
-  const { user, signOut, hasPermission } = useAuth();
+  const { user, signOut, hasPermission, getMasterEmail } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
@@ -271,9 +300,74 @@ export default function Dashboard() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [readNotifs, setReadNotifs] = useState<number[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
   const [directWorkspaceId, setDirectWorkspaceId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Workspace | null>(null);
+
+  // Workspace persistence helpers
+  const masterEmail = getMasterEmail();
+  const storageKey = masterEmail ? `pf_workspaces_${masterEmail}` : null;
+
+  const loadWorkspaces = useCallback((): Workspace[] => {
+    if (!storageKey) return initialWorkspaces;
+    const stored = localStorage.getItem(storageKey);
+    return stored ? JSON.parse(stored) : initialWorkspaces;
+  }, [storageKey]);
+
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(loadWorkspaces);
+
+  const saveWorkspaces = useCallback((wsList: Workspace[]) => {
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(wsList));
+  }, [storageKey]);
+
+  // Filter workspaces for non-master roles: only show where user is a member
+  const visibleWorkspaces = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "master") return workspaces;
+    // Team members see only workspaces where their initials or name match a member
+    const userInitial = user.name.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    return workspaces.filter(ws =>
+      ws.members.some(m =>
+        m.email === user.email ||
+        m.name.toLowerCase() === user.name.toLowerCase() ||
+        m.avatar === userInitial
+      )
+    );
+  }, [user, workspaces]);
+
+  // Generate dynamic notifications based on assigned tasks
+  const dynamicNotifications = useMemo(() => {
+    const baseNotifs = [...notifications];
+    if (!user || user.role === "master") return baseNotifs;
+
+    const userInitial = user.name.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    let id = 100;
+    visibleWorkspaces.forEach(ws => {
+      // Notification: You were added to a project
+      baseNotifs.unshift({
+        id: id++,
+        title: `You were added to "${ws.name}"`,
+        desc: `${ws.tasks.length} tasks · ${ws.members.length} members`,
+        time: ws.createdAt,
+        unread: true,
+        icon: FolderPlus,
+      });
+      // Notifications for tasks assigned to this user
+      ws.tasks
+        .filter(t => t.assignee === userInitial)
+        .slice(0, 3)
+        .forEach(task => {
+          baseNotifs.unshift({
+            id: id++,
+            title: `Task assigned: ${task.title}`,
+            desc: `${ws.name} · ${task.priority} priority · ${task.status}`,
+            time: task.dueDate || ws.createdAt,
+            unread: true,
+            icon: ListChecks,
+          });
+        });
+    });
+    return baseNotifs;
+  }, [user, visibleWorkspaces]);
 
   const handleSignOut = () => { signOut(); navigate("/"); };
   const userPlan = activeAccount.plan || "free";
@@ -284,21 +378,33 @@ export default function Dashboard() {
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
   };
-  const markAllRead = () => setReadNotifs(notifications.map((n) => n.id));
-  const unreadCount = notifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
+  const markAllRead = () => setReadNotifs(dynamicNotifications.map((n) => n.id));
+  const unreadCount = dynamicNotifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
   const handleCreateWorkspace = useCallback((ws: Workspace) => {
-    setWorkspaces((prev) => [ws, ...prev]);
-  }, []);
+    setWorkspaces((prev) => {
+      const updated = [ws, ...prev];
+      saveWorkspaces(updated);
+      return updated;
+    });
+  }, [saveWorkspaces]);
 
   const handleUpdateWorkspace = useCallback((updated: Workspace) => {
-    setWorkspaces((prev) => prev.map((w) => w.id === updated.id ? updated : w));
-  }, []);
+    setWorkspaces((prev) => {
+      const newList = prev.map((w) => w.id === updated.id ? updated : w);
+      saveWorkspaces(newList);
+      return newList;
+    });
+  }, [saveWorkspaces]);
 
   const handleDeleteWorkspace = useCallback((id: string) => {
-    setWorkspaces((prev) => prev.filter((w) => w.id !== id));
+    setWorkspaces((prev) => {
+      const newList = prev.filter((w) => w.id !== id);
+      saveWorkspaces(newList);
+      return newList;
+    });
     setDeleteTarget(null);
-  }, []);
+  }, [saveWorkspaces]);
 
   const openWorkspaceDirectly = (wsId: string) => {
     setDirectWorkspaceId(wsId);
@@ -310,7 +416,7 @@ export default function Dashboard() {
       case "projects":
         return (
           <ProjectsPage
-            workspaces={workspaces}
+            workspaces={visibleWorkspaces}
             onCreate={handleCreateWorkspace}
             onUpdate={handleUpdateWorkspace}
             onDelete={(ws) => setDeleteTarget(ws)}
@@ -328,7 +434,7 @@ export default function Dashboard() {
       case "userManagement": return <UserManagementPage />;
       case "licensing": return <LicensingPage />;
       case "chat": return <ChatPage />;
-      default: return <DashboardHome user={activeAccount} onNavigate={setActivePage} />;
+      default: return <DashboardHome user={activeAccount} onNavigate={setActivePage} myWorkspaces={visibleWorkspaces} />;
     }
   };
 
@@ -342,7 +448,7 @@ export default function Dashboard() {
   const getInitials = (name: string) => name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2);
   const userInitials = getInitials(activeAccount.name || "User");
 
-  const recentWorkspaces = workspaces.slice(0, 4);
+  const recentWorkspaces = visibleWorkspaces.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -470,7 +576,7 @@ export default function Dashboard() {
                   <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>
                 </div>
                 <div className="max-h-[320px] overflow-auto divide-y divide-border">
-                  {notifications.map((n) => {
+                  {dynamicNotifications.map((n) => {
                     const isUnread = n.unread && !readNotifs.includes(n.id);
                     return (
                       <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${isUnread ? "bg-primary/5" : ""}`}
