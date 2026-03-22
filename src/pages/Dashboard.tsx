@@ -251,7 +251,7 @@ function DashboardHome({ user, onNavigate }: { user: { name: string; email: stri
 }
 
 export default function Dashboard() {
-  const { user, signOut, hasPermission } = useAuth();
+  const { user, signOut, hasPermission, getMasterEmail } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
@@ -271,9 +271,74 @@ export default function Dashboard() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [readNotifs, setReadNotifs] = useState<number[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
   const [directWorkspaceId, setDirectWorkspaceId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Workspace | null>(null);
+
+  // Workspace persistence helpers
+  const masterEmail = getMasterEmail();
+  const storageKey = masterEmail ? `pf_workspaces_${masterEmail}` : null;
+
+  const loadWorkspaces = useCallback((): Workspace[] => {
+    if (!storageKey) return initialWorkspaces;
+    const stored = localStorage.getItem(storageKey);
+    return stored ? JSON.parse(stored) : initialWorkspaces;
+  }, [storageKey]);
+
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(loadWorkspaces);
+
+  const saveWorkspaces = useCallback((wsList: Workspace[]) => {
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(wsList));
+  }, [storageKey]);
+
+  // Filter workspaces for non-master roles: only show where user is a member
+  const visibleWorkspaces = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "master") return workspaces;
+    // Team members see only workspaces where their initials or name match a member
+    const userInitial = user.name.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    return workspaces.filter(ws =>
+      ws.members.some(m =>
+        m.email === user.email ||
+        m.name.toLowerCase() === user.name.toLowerCase() ||
+        m.avatar === userInitial
+      )
+    );
+  }, [user, workspaces]);
+
+  // Generate dynamic notifications based on assigned tasks
+  const dynamicNotifications = useMemo(() => {
+    const baseNotifs = [...notifications];
+    if (!user || user.role === "master") return baseNotifs;
+
+    const userInitial = user.name.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    let id = 100;
+    visibleWorkspaces.forEach(ws => {
+      // Notification: You were added to a project
+      baseNotifs.unshift({
+        id: id++,
+        title: `You were added to "${ws.name}"`,
+        desc: `${ws.tasks.length} tasks · ${ws.members.length} members`,
+        time: ws.createdAt,
+        unread: true,
+        icon: FolderPlus,
+      });
+      // Notifications for tasks assigned to this user
+      ws.tasks
+        .filter(t => t.assignee === userInitial)
+        .slice(0, 3)
+        .forEach(task => {
+          baseNotifs.unshift({
+            id: id++,
+            title: `Task assigned: ${task.title}`,
+            desc: `${ws.name} · ${task.priority} priority · ${task.status}`,
+            time: task.dueDate || ws.createdAt,
+            unread: true,
+            icon: ListChecks,
+          });
+        });
+    });
+    return baseNotifs;
+  }, [user, visibleWorkspaces]);
 
   const handleSignOut = () => { signOut(); navigate("/"); };
   const userPlan = activeAccount.plan || "free";
