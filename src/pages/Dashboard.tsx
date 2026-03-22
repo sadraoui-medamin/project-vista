@@ -547,7 +547,7 @@ export default function Dashboard() {
                   <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>
                 </div>
                 <div className="max-h-[320px] overflow-auto divide-y divide-border">
-                  {notifications.map((n) => {
+                  {dynamicNotifications.map((n) => {
                     const isUnread = n.unread && !readNotifs.includes(n.id);
                     return (
                       <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${isUnread ? "bg-primary/5" : ""}`}
