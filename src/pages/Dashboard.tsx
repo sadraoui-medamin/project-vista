@@ -387,7 +387,7 @@ export default function Dashboard() {
       case "projects":
         return (
           <ProjectsPage
-            workspaces={workspaces}
+            workspaces={visibleWorkspaces}
             onCreate={handleCreateWorkspace}
             onUpdate={handleUpdateWorkspace}
             onDelete={(ws) => setDeleteTarget(ws)}
