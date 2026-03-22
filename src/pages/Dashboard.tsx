@@ -419,7 +419,7 @@ export default function Dashboard() {
   const getInitials = (name: string) => name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2);
   const userInitials = getInitials(activeAccount.name || "User");
 
-  const recentWorkspaces = workspaces.slice(0, 4);
+  const recentWorkspaces = visibleWorkspaces.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background flex">
