@@ -434,7 +434,7 @@ export default function Dashboard() {
       case "userManagement": return <UserManagementPage />;
       case "licensing": return <LicensingPage />;
       case "chat": return <ChatPage />;
-      default: return <DashboardHome user={activeAccount} onNavigate={setActivePage} />;
+      default: return <DashboardHome user={activeAccount} onNavigate={setActivePage} myWorkspaces={visibleWorkspaces} />;
     }
   };
 
