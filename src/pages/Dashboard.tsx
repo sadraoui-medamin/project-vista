@@ -349,8 +349,8 @@ export default function Dashboard() {
     const required = pageAccess[page] || "free";
     return planRank[userPlan] >= planRank[required];
   };
-  const markAllRead = () => setReadNotifs(notifications.map((n) => n.id));
-  const unreadCount = notifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
+  const markAllRead = () => setReadNotifs(dynamicNotifications.map((n) => n.id));
+  const unreadCount = dynamicNotifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
   const handleCreateWorkspace = useCallback((ws: Workspace) => {
     setWorkspaces((prev) => {
