@@ -263,7 +263,7 @@ function DashboardHome({ user, onNavigate, myWorkspaces }: { user: { name: strin
           </div>
           <div className="glass rounded-2xl overflow-hidden">
             <div className="divide-y divide-border">
-              {recentTasks.map((task) => (
+              {myTasks.map((task) => (
                 <div key={task.title} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
                   <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground truncate">{task.title}</p></div>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${statusColors[task.status]}`}>{task.status}</span>
