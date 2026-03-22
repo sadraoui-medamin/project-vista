@@ -240,7 +240,7 @@ function DashboardHome({ user, onNavigate, myWorkspaces }: { user: { name: strin
               <Plus className="h-3 w-3 mr-1" /> New
             </Button>
           </div>
-          {projects.map((project) => (
+          {myProjects.map((project) => (
             <div key={project.name} className="glass rounded-2xl p-4 hover:gradient-shadow transition-shadow duration-300 cursor-pointer" onClick={() => onNavigate("projects")}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-sm text-foreground">{project.name}</h3>
