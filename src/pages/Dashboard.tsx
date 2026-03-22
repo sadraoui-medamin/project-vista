@@ -353,17 +353,29 @@ export default function Dashboard() {
   const unreadCount = notifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
   const handleCreateWorkspace = useCallback((ws: Workspace) => {
-    setWorkspaces((prev) => [ws, ...prev]);
-  }, []);
+    setWorkspaces((prev) => {
+      const updated = [ws, ...prev];
+      saveWorkspaces(updated);
+      return updated;
+    });
+  }, [saveWorkspaces]);
 
   const handleUpdateWorkspace = useCallback((updated: Workspace) => {
-    setWorkspaces((prev) => prev.map((w) => w.id === updated.id ? updated : w));
-  }, []);
+    setWorkspaces((prev) => {
+      const newList = prev.map((w) => w.id === updated.id ? updated : w);
+      saveWorkspaces(newList);
+      return newList;
+    });
+  }, [saveWorkspaces]);
 
   const handleDeleteWorkspace = useCallback((id: string) => {
-    setWorkspaces((prev) => prev.filter((w) => w.id !== id));
+    setWorkspaces((prev) => {
+      const newList = prev.filter((w) => w.id !== id);
+      saveWorkspaces(newList);
+      return newList;
+    });
     setDeleteTarget(null);
-  }, []);
+  }, [saveWorkspaces]);
 
   const openWorkspaceDirectly = (wsId: string) => {
     setDirectWorkspaceId(wsId);
