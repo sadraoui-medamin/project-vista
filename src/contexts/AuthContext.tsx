@@ -32,6 +32,7 @@ interface AuthContextType {
   deleteTeamMember: (id: string) => void;
   updateTeamMemberRole: (id: string, role: UserRole) => void;
   hasPermission: (feature: string) => boolean;
+  getMasterEmail: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
