@@ -44,7 +44,7 @@ const pageAccess: Record<string, Plan> = {
   accountSettings: "free", billing: "free", workspaceSettings: "free",
   personalSettings: "free", userManagement: "free", licensing: "free",
 };
-const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics" };
+const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics", workspaceLimit: "Workspace Limit" };
 const planRank: Record<Plan, number> = { free: 0, pro: 1, enterprise: 2 };
 
 // Features that are role-restricted (not plan-restricted)
@@ -280,18 +280,26 @@ function DashboardHome({ user, onNavigate, myWorkspaces }: { user: { name: strin
 }
 
 export default function Dashboard() {
-  const { user, signOut, hasPermission, getMasterEmail } = useAuth();
+  const { user, signIn, signOut, hasPermission, getMasterEmail, teamMembers } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
-    () => [
-      { id: "current", name: user?.name || "User", email: user?.email || "user@example.com", plan: user?.plan || "free" },
-      { id: "studio", name: "Maya Chen", email: "maya@projectflow.app", plan: "pro" },
-      { id: "ops", name: "Noah Parker", email: "noah@projectflow.app", plan: "enterprise" },
-    ],
-    [user],
-  );
-  const [activeAccountId, setActiveAccountId] = useState("current");
+
+  // Dynamic account list: master + all team members
+  const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan; password?: string }>>(() => {
+    const master = { id: "master", name: user?.name || "User", email: user?.email || "user@example.com", plan: user?.plan || "free" };
+    const members = teamMembers.map((m) => ({
+      id: m.id,
+      name: m.name,
+      email: m.email,
+      plan: "free" as Plan,
+      password: m.password,
+    }));
+    return [master, ...members];
+  }, [user, teamMembers]);
+  const [activeAccountId, setActiveAccountId] = useState("master");
+
+  // Workspace limits per plan
+  const workspaceLimits: Record<Plan, number> = { free: 3, pro: 10, enterprise: 999 };
   const activeAccount = accountOptions.find((account) => account.id === activeAccountId) ?? accountOptions[0];
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
@@ -381,13 +389,20 @@ export default function Dashboard() {
   const markAllRead = () => setReadNotifs(dynamicNotifications.map((n) => n.id));
   const unreadCount = dynamicNotifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
+  const workspaceLimit = workspaceLimits[userPlan];
+  const canCreateWorkspace = workspaces.length < workspaceLimit;
+
   const handleCreateWorkspace = useCallback((ws: Workspace) => {
+    if (!canCreateWorkspace) {
+      setUpgradeDialog("workspaceLimit");
+      return;
+    }
     setWorkspaces((prev) => {
       const updated = [ws, ...prev];
       saveWorkspaces(updated);
       return updated;
     });
-  }, [saveWorkspaces]);
+  }, [saveWorkspaces, canCreateWorkspace]);
 
   const handleUpdateWorkspace = useCallback((updated: Workspace) => {
     setWorkspaces((prev) => {
@@ -678,19 +693,41 @@ export default function Dashboard() {
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
-                <DropdownMenuSub>
+              <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer"><ArrowRightLeft className="h-4 w-4" /> Switch account</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="glass border-border rounded-xl min-w-64">
-                    {accountOptions.map((account) => (
-                      <DropdownMenuItem key={account.id} onClick={() => setActiveAccountId(account.id)} className="cursor-pointer gap-3 px-3 py-2.5">
-                        <div className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">{getInitials(account.name)}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{account.email}</p>
-                        </div>
-                        {activeAccountId === account.id && <Check className="h-4 w-4 text-primary shrink-0" />}
-                      </DropdownMenuItem>
-                    ))}
+                  <DropdownMenuSubContent className="glass border-border rounded-xl min-w-64 max-h-80 overflow-auto">
+                    {accountOptions.length <= 1 && (
+                      <div className="px-4 py-3 text-xs text-muted-foreground text-center">No team members yet. Create members in User Management.</div>
+                    )}
+                    {accountOptions.map((account) => {
+                      const isCurrent = account.id === activeAccountId || (account.id === "master" && activeAccountId === "master");
+                      return (
+                        <DropdownMenuItem
+                          key={account.id}
+                          onClick={() => {
+                            if (account.id === "master") {
+                              // Switch back to master
+                              const masterEm = getMasterEmail() || user?.email || "";
+                              signIn(masterEm, "");
+                              setActiveAccountId("master");
+                            } else {
+                              // Sign in as team member
+                              signIn(account.email, account.password || "");
+                              setActiveAccountId(account.id);
+                            }
+                          }}
+                          className="cursor-pointer gap-3 px-3 py-2.5"
+                        >
+                          <div className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">{getInitials(account.name)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{account.email}</p>
+                            <p className="text-[10px] text-muted-foreground/70 capitalize">{account.id === "master" ? "Master" : "Team Member"}</p>
+                          </div>
+                          {isCurrent && <Check className="h-4 w-4 text-primary shrink-0" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
@@ -731,7 +768,10 @@ export default function Dashboard() {
             <div className="gradient-bg rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-2"><Lock className="h-6 w-6 text-primary-foreground" /></div>
             <DialogTitle className="text-lg font-bold text-foreground">{featureLabels[upgradeDialog || ""] || upgradeDialog} is locked</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Upgrade to the <span className="font-semibold gradient-text capitalize">{pageAccess[upgradeDialog || ""] || "pro"}</span> plan to unlock this feature.
+              {upgradeDialog === "workspaceLimit"
+                ? `You've reached the limit of ${workspaceLimits[userPlan]} workspaces on your ${userPlan} plan. Upgrade to create more.`
+                : <>Upgrade to the <span className="font-semibold gradient-text capitalize">{pageAccess[upgradeDialog || ""] || "pro"}</span> plan to unlock this feature.</>
+              }
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => { setUpgradeDialog(null); setActivePage("billing"); }} className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl px-6 gap-2 w-full">
