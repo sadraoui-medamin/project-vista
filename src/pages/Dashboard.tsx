@@ -768,7 +768,10 @@ export default function Dashboard() {
             <div className="gradient-bg rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-2"><Lock className="h-6 w-6 text-primary-foreground" /></div>
             <DialogTitle className="text-lg font-bold text-foreground">{featureLabels[upgradeDialog || ""] || upgradeDialog} is locked</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Upgrade to the <span className="font-semibold gradient-text capitalize">{pageAccess[upgradeDialog || ""] || "pro"}</span> plan to unlock this feature.
+              {upgradeDialog === "workspaceLimit"
+                ? `You've reached the limit of ${workspaceLimits[userPlan]} workspaces on your ${userPlan} plan. Upgrade to create more.`
+                : <>Upgrade to the <span className="font-semibold gradient-text capitalize">{pageAccess[upgradeDialog || ""] || "pro"}</span> plan to unlock this feature.</>
+              }
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => { setUpgradeDialog(null); setActivePage("billing"); }} className="gradient-bg gradient-shadow text-primary-foreground border-0 rounded-xl px-6 gap-2 w-full">
