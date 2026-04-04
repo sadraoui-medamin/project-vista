@@ -44,7 +44,7 @@ const pageAccess: Record<string, Plan> = {
   accountSettings: "free", billing: "free", workspaceSettings: "free",
   personalSettings: "free", userManagement: "free", licensing: "free",
 };
-const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics" };
+const featureLabels: Record<string, string> = { time: "Time Tracking", analytics: "Analytics", workspaceLimit: "Workspace Limit" };
 const planRank: Record<Plan, number> = { free: 0, pro: 1, enterprise: 2 };
 
 // Features that are role-restricted (not plan-restricted)
