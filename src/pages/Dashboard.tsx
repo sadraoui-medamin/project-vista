@@ -693,19 +693,41 @@ export default function Dashboard() {
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
-                <DropdownMenuSub>
+              <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="gap-3 px-4 py-2.5 cursor-pointer"><ArrowRightLeft className="h-4 w-4" /> Switch account</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="glass border-border rounded-xl min-w-64">
-                    {accountOptions.map((account) => (
-                      <DropdownMenuItem key={account.id} onClick={() => setActiveAccountId(account.id)} className="cursor-pointer gap-3 px-3 py-2.5">
-                        <div className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">{getInitials(account.name)}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{account.email}</p>
-                        </div>
-                        {activeAccountId === account.id && <Check className="h-4 w-4 text-primary shrink-0" />}
-                      </DropdownMenuItem>
-                    ))}
+                  <DropdownMenuSubContent className="glass border-border rounded-xl min-w-64 max-h-80 overflow-auto">
+                    {accountOptions.length <= 1 && (
+                      <div className="px-4 py-3 text-xs text-muted-foreground text-center">No team members yet. Create members in User Management.</div>
+                    )}
+                    {accountOptions.map((account) => {
+                      const isCurrent = account.id === activeAccountId || (account.id === "master" && activeAccountId === "master");
+                      return (
+                        <DropdownMenuItem
+                          key={account.id}
+                          onClick={() => {
+                            if (account.id === "master") {
+                              // Switch back to master
+                              const masterEm = getMasterEmail() || user?.email || "";
+                              signIn(masterEm, "");
+                              setActiveAccountId("master");
+                            } else {
+                              // Sign in as team member
+                              signIn(account.email, account.password || "");
+                              setActiveAccountId(account.id);
+                            }
+                          }}
+                          className="cursor-pointer gap-3 px-3 py-2.5"
+                        >
+                          <div className="gradient-bg rounded-full w-8 h-8 flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">{getInitials(account.name)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{account.email}</p>
+                            <p className="text-[10px] text-muted-foreground/70 capitalize">{account.id === "master" ? "Master" : "Team Member"}</p>
+                          </div>
+                          {isCurrent && <Check className="h-4 w-4 text-primary shrink-0" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
