@@ -389,13 +389,20 @@ export default function Dashboard() {
   const markAllRead = () => setReadNotifs(dynamicNotifications.map((n) => n.id));
   const unreadCount = dynamicNotifications.filter((n) => n.unread && !readNotifs.includes(n.id)).length;
 
+  const workspaceLimit = workspaceLimits[userPlan];
+  const canCreateWorkspace = workspaces.length < workspaceLimit;
+
   const handleCreateWorkspace = useCallback((ws: Workspace) => {
+    if (!canCreateWorkspace) {
+      setUpgradeDialog("workspaceLimit");
+      return;
+    }
     setWorkspaces((prev) => {
       const updated = [ws, ...prev];
       saveWorkspaces(updated);
       return updated;
     });
-  }, [saveWorkspaces]);
+  }, [saveWorkspaces, canCreateWorkspace]);
 
   const handleUpdateWorkspace = useCallback((updated: Workspace) => {
     setWorkspaces((prev) => {
