@@ -280,18 +280,26 @@ function DashboardHome({ user, onNavigate, myWorkspaces }: { user: { name: strin
 }
 
 export default function Dashboard() {
-  const { user, signOut, hasPermission, getMasterEmail } = useAuth();
+  const { user, signIn, signOut, hasPermission, getMasterEmail, teamMembers } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan }>>(
-    () => [
-      { id: "current", name: user?.name || "User", email: user?.email || "user@example.com", plan: user?.plan || "free" },
-      { id: "studio", name: "Maya Chen", email: "maya@projectflow.app", plan: "pro" },
-      { id: "ops", name: "Noah Parker", email: "noah@projectflow.app", plan: "enterprise" },
-    ],
-    [user],
-  );
-  const [activeAccountId, setActiveAccountId] = useState("current");
+
+  // Dynamic account list: master + all team members
+  const accountOptions = useMemo<Array<{ id: string; name: string; email: string; plan: Plan; password?: string }>>(() => {
+    const master = { id: "master", name: user?.name || "User", email: user?.email || "user@example.com", plan: user?.plan || "free" };
+    const members = teamMembers.map((m) => ({
+      id: m.id,
+      name: m.name,
+      email: m.email,
+      plan: "free" as Plan,
+      password: m.password,
+    }));
+    return [master, ...members];
+  }, [user, teamMembers]);
+  const [activeAccountId, setActiveAccountId] = useState("master");
+
+  // Workspace limits per plan
+  const workspaceLimits: Record<Plan, number> = { free: 3, pro: 10, enterprise: 999 };
   const activeAccount = accountOptions.find((account) => account.id === activeAccountId) ?? accountOptions[0];
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
